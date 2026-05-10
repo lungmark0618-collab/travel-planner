@@ -375,22 +375,37 @@ elif page == "⚙️ 旅程設定":
         st.warning("⚠️ 偵測到手動輸入的匯率尚未儲存，若點擊下方按鈕將會覆蓋您的修改。")
 
     if st.button("🌐 更新網路即時匯率", use_container_width=True):
-        try:
-            resp = requests.get("https://api.exchangerate-api.com/v4/latest/TWD", timeout=10)
-            if resp.status_code == 200:
-                fx = resp.json().get("rates", {})
-                new_rates = {}
-                for cur in ["JPY","USD","EUR","KRW"]:
-                    if cur in fx:
-                        new_rates[cur] = round(1 / fx[cur], 4)
-                
-                data["exchange_rates"].update(new_rates)
-                dm.save_data(data, trip_code)
-                
-                # 顯示成功訊息並立刻重新整理畫面，讓輸入框顯示最新數字
-                msg_area.success("✅ 網路匯率已同步更新成功！")
-                st.rerun()
-            else:
-                msg_area.error("❌ 伺服器回應異常，請稍後再試")
-        except:
-            msg_area.error("❌ 網路連線超時，請稍後再試")
+        # 建立備援名單 (備用多個來源，提高成功率)
+        sources = [
+            "https://api.frankfurter.app/latest?from=TWD",
+            "https://api.exchangerate-api.com/v4/latest/TWD",
+            "https://open.er-api.com/v6/latest/TWD"
+        ]
+        
+        success_flag = False
+        with st.spinner("正在連線多個匯率中心..."):
+            for url in sources:
+                try:
+                    resp = requests.get(url, timeout=5)
+                    if resp.status_code == 200:
+                        fx = resp.json().get("rates", {})
+                        new_rates = {}
+                        # 處理不同 API 的資料格式
+                        for cur in ["JPY","USD","EUR","KRW"]:
+                            if cur in fx:
+                                # Frankfurter API 是直接給 1 TWD = 多少外幣，我們需要倒過來
+                                val = fx[cur]
+                                new_rates[cur] = round(1 / val, 4)
+                        
+                        data["exchange_rates"].update(new_rates)
+                        dm.save_data(data, trip_code)
+                        success_flag = True
+                        break # 成功了就跳出循環
+                except:
+                    continue # 失敗就換下一個
+        
+        if success_flag:
+            msg_area.success("✅ 匯率已透過備援線路同步更新成功！")
+            st.rerun()
+        else:
+            msg_area.error("❌ 目前所有匯率中心連線均超時，請檢查連線或稍後再試。")
