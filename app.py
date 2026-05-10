@@ -16,7 +16,7 @@ importlib.reload(dm)
 
 # ─── 頁面設定 ───────────────────────────────────────────────────
 st.set_page_config(
-    page_title="智慧旅遊規劃器 | Smart Travel Buddy",
+    page_title="智慧旅遊小管家 | Smart Travel Buddy",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -88,8 +88,8 @@ if "rate_ver" not in st.session_state: st.session_state.rate_ver = 0
 
 # ─── 帳號層：登入/註冊 ───────────────────────────────────────────
 if st.session_state.user is None:
-    st.markdown("## 🌍 智慧旅遊規劃器")
-    st.markdown("<p style='color:#a0aec0;'>您的專屬旅遊管家</p>", unsafe_allow_html=True)
+    st.markdown("## 🌍 智慧旅遊小管家")
+    st.markdown("<p style='color:#a0aec0;'>您的隨身旅遊管家</p>", unsafe_allow_html=True)
     
     if st.session_state.auth_page == "login":
         with st.form("login_form"):
