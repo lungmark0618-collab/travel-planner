@@ -198,6 +198,17 @@ if st.session_state.trip_code is None:
                             st.session_state.trip_code = s; st.rerun()
 
     st.markdown("---")
+    with st.expander("👤 帳號設定"):
+        st.markdown(f"<small style='color:#94a3b8;'>使用者名稱：{st.session_state.user}</small>", unsafe_allow_html=True)
+        new_p = st.text_input("修改登入密碼", type="password", placeholder="輸入新密碼...")
+        if st.button("💾 確定修改密碼", use_container_width=True):
+            if len(new_p) >= 4:
+                success, msg = dm.update_user_password(st.session_state.user, new_p)
+                if success: st.success(msg)
+                else: st.error(msg)
+            else: st.warning("密碼長度至少需 4 位數")
+
+    st.markdown("---")
     if st.button("🚪 登出帳號", use_container_width=True, type="secondary"):
         st.session_state.user = None; st.rerun()
     st.stop()

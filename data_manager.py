@@ -69,6 +69,14 @@ def login_user(username, password):
         return None, "密碼錯誤"
     return users[username], "登入成功"
 
+def update_user_password(username, new_password):
+    users = _load_json(USERS_FILE, {})
+    if username in users:
+        users[username]["password"] = hash_password(new_password)
+        _save_json(USERS_FILE, users)
+        return True, "密碼修改成功"
+    return False, "使用者不存在"
+
 # ─── 旅程管理 ─────────────────────────────────────────────────
 
 def create_trip(owner_username, secret, trip_name, is_public=True, password=None):
