@@ -16,12 +16,12 @@ importlib.reload(dm)
 
 # ─── 頁面設定 ───────────────────────────────────────────────────
 st.set_page_config(
-    page_title="智慧旅遊規劃師 | Smart Travel Buddy",
+    page_title="智慧旅遊規劃器 | Smart Travel Buddy",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-st.title("🌍 智慧旅遊規劃師")
+st.title("🌍 智慧旅遊規劃器")
 st.markdown("<p style='color:#a0aec0; font-size:1.1rem; margin-top:-20px;'>Smart Travel Buddy - 您的專屬旅伴</p>", unsafe_allow_html=True)
 
 # ─── 常數設定 ──────────────────────────────────────────────────
