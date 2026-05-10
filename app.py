@@ -266,64 +266,50 @@ footer { display: none !important; }
     .nav-btn .nav-icon { font-size: 1.3rem; }
 }
 
-/* ═══ 底部導覽列樣式 ═══════════════════════════════════════════ */
-/* 固定在底部的容器：鎖定最後一個 stHorizontalBlock */
-div[data-testid="stBottom"] { display: none !important; }
 
-section.main .block-container > div > div > div:last-child
-> div[data-testid="stHorizontalBlock"] {
-    position: fixed !important;
-    bottom: 0 !important; left: 0 !important; right: 0 !important;
-    background: rgba(19, 25, 43, 0.97) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border-top: 1px solid rgba(255,255,255,0.1) !important;
-    padding: 4px 8px !important;
-    padding-bottom: env(safe-area-inset-bottom, 4px) !important;
-    z-index: 9999 !important;
-    gap: 0 !important;
+/* ═══ 頂部導覽列（手機顯示，桌機隱藏）══════════════════════════ */
+.top-nav-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: rgba(22, 28, 48, 0.9);
+    border-radius: 14px;
+    padding: 5px;
+    border: 1px solid rgba(255,255,255,0.07);
 }
-/* 強制手機上也水平排列 */
-@media (max-width: 768px) {
-    section.main .block-container > div > div > div:last-child
-    > div[data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-    }
-    section.main .block-container > div > div > div:last-child
-    > div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-        flex: 1 !important;
-        width: 25% !important;
-        min-width: 0 !important;
-        max-width: 25% !important;
-    }
-}
-/* 導覽按鈕外觀 */
-section.main .block-container > div > div > div:last-child
-> div[data-testid="stHorizontalBlock"] .stButton > button {
+.top-nav-bar .stButton > button {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     color: #64748b !important;
-    font-size: 0.6rem !important;
-    min-height: 54px !important;
-    padding: 4px 2px !important;
-    border-radius: 8px !important;
+    font-size: 0.75rem !important;
+    min-height: 44px !important;
+    padding: 6px 4px !important;
+    border-radius: 10px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
     white-space: pre-line !important;
-    line-height: 1.3 !important;
+    line-height: 1.4 !important;
     font-weight: 500 !important;
-    letter-spacing: 0.02em !important;
+    transition: all 0.15s ease !important;
 }
-section.main .block-container > div > div > div:last-child
-> div[data-testid="stHorizontalBlock"] .stButton > button:hover,
-section.main .block-container > div > div > div:last-child
-> div[data-testid="stHorizontalBlock"] .stButton > button:focus {
+.top-nav-bar .stButton > button:hover {
+    color: #e2e8f0 !important;
+    background: rgba(99,179,237,0.1) !important;
+}
+.top-nav-active .stButton > button {
     color: #63b3ed !important;
-    background: rgba(99,179,237,0.08) !important;
+    background: rgba(99,179,237,0.12) !important;
+}
+
+/* 桌機上隱藏頂部導覽，手機上隱藏側邊欄 */
+@media (min-width: 768px) {
+    .top-nav-bar { display: none !important; }
+}
+@media (max-width: 767px) {
+    section[data-testid="stSidebar"] { display: none !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -373,6 +359,29 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(f"<small style='color:#64748b;'>旅程：{_sb_data['trip_name']}</small>",
                 unsafe_allow_html=True)
+
+
+# ── 頂部導覽列（手機用，桌機靠側邊欄）───────────────────────────
+st.markdown('<div class="top-nav-bar">', unsafe_allow_html=True)
+_tnav_cols = st.columns(4)
+for _tcol, (_ticon, _tshort, _tkey) in zip(
+    _tnav_cols,
+    [("🏠", "總覽", "🏠 總覽看板"),
+     ("📅", "行程", "📅 行程規劃"),
+     ("💰", "記帳", "💰 記帳本"),
+     ("⚙️", "設定", "⚙️ 旅程設定")]
+):
+    with _tcol:
+        _active_cls = "top-nav-active" if st.session_state.page == _tkey else ""
+        st.markdown(f'<div class="{_active_cls}">', unsafe_allow_html=True)
+        if st.button(f"{_ticon}\n{_tshort}", key=f"tnav_{_tkey}",
+                     use_container_width=True):
+            st.session_state.page = _tkey
+            st.session_state.edit_item_id = None
+            st.session_state.expense_from_item = None
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 page = st.session_state.page
@@ -899,22 +908,4 @@ elif page == "⚙️ 旅程設定":
             data["expenses"] = []
             dm.save_data(data)
             st.success("所有資料已清除！")
-            st.rerun()
-
-# ══ 底部導覽列（放在頁面最後，CSS 固定到螢幕底部）═══════════════
-_bnav_c1, _bnav_c2, _bnav_c3, _bnav_c4 = st.columns(4)
-_cur_page = st.session_state.page
-for _col, (_icon, _short, _key) in zip(
-    [_bnav_c1, _bnav_c2, _bnav_c3, _bnav_c4],
-    [("🏠", "總覽", "🏠 總覽看板"),
-     ("📅", "行程", "📅 行程規劃"),
-     ("💰", "記帳", "💰 記帳本"),
-     ("⚙️", "設定", "⚙️ 旅程設定")]
-):
-    with _col:
-        _lbl = f"{_icon}\n{_short}"
-        if st.button(_lbl, key=f"bnav_{_key}", use_container_width=True):
-            st.session_state.page = _key
-            st.session_state.edit_item_id = None
-            st.session_state.expense_from_item = None
             st.rerun()
