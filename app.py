@@ -406,6 +406,10 @@ elif page == "⚙️ 旅程設定":
                     continue # 失敗就換下一個
         
         if success_flag:
+            # 關鍵修正：更新成功後，立刻清除輸入框的快取記憶
+            for key in ["input_jpy", "input_usd", "input_eur", "input_krw"]:
+                if key in st.session_state: del st.session_state[key]
+            
             msg_area.success("✅ 匯率已透過備援線路同步更新成功！")
             st.rerun()
         else:
