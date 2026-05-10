@@ -28,3 +28,5 @@ streamlit run app.py
 > **注意：** Streamlit Cloud 的免費版是無狀態的，每次 redeploy 都會清除 `travel_data.json`。
 > 建議使用 **Streamlit Community Cloud** 的 Secrets 或外部資料庫（如 Supabase）來持久化資料。
 > 本地端使用則完全正常，資料儲存在同目錄的 `travel_data.json`。
+
+<!-- auto-push ok -->
