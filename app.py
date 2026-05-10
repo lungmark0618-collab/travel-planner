@@ -994,7 +994,7 @@ elif page == "⚙️ 旅程設定":
 
     # ── 即時匯率 ──
     st.markdown("#### 🔄 載入即時匯率")
-    st.caption("資料來源：open.er-api.com（免費，無需帳號）")
+    st.caption("資料來源：open.er-api.com")
     col_fetch1, col_fetch2 = st.columns([2,1])
     with col_fetch1:
         if st.button("🌐 一鍵載入今日即時匯率", use_container_width=True):
