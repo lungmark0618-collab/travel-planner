@@ -89,7 +89,8 @@ if "rate_ver" not in st.session_state: st.session_state.rate_ver = 0
 
 # ─── 帳號層：登入/註冊 ───────────────────────────────────────────
 if st.session_state.user is None:
-    st.markdown("<div style='text-align:center; padding: 40px 0;'><h1 style='font-size:3rem; margin:0;'>✈️ 旅伴助手</h1><p style='color:#94a3b8;'>你的專屬旅遊管家</p></div>", unsafe_allow_html=True)
+    st.markdown("## 🌍 智慧旅遊規劃器")
+    st.markdown("<p style='color:#a0aec0;'>您的專屬旅遊規劃器</p>", unsafe_allow_html=True)
     
     if st.session_state.auth_page == "login":
         with st.form("login_form"):
