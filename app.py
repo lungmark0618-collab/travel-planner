@@ -148,13 +148,14 @@ if st.session_state.trip_code is None:
         with st.form("create_trip_form"):
             st.markdown("### 🌟 建立全新旅程")
             c_name = st.text_input("旅程名稱", placeholder="例如：2026 東京賞櫻之旅")
-            c_secret = st.text_input("旅程邀請碼 (唯一代碼)", placeholder="設定一個專屬的邀請代碼")
-            st.markdown("<p style='color:#a0aec0; font-size:0.8rem; margin-top:-15px;'>💡 這是您的旅程身份證，請設定一串獨一無二的代碼（例如：2026tokyo）。</p>", unsafe_allow_html=True)
-            c_privacy = st.radio("隱私設定", ["🌐 公開 (他人可搜尋)", "🔒 私人 (僅限自己)"], horizontal=True)
-            c_pwd = st.text_input("存取密碼 (選填)", type="password", help="設定密碼後，他人加入時需輸入")
+            # 隱藏欄位，改為後台自動生成
+            import random, string
+            c_secret = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+            
             cc1, cc2 = st.columns(2)
             if cc1.form_submit_button("確定建立", use_container_width=True):
-                success, msg = dm.create_trip(st.session_state.user, c_secret, c_name, "公開" in c_privacy, c_pwd if c_pwd else None)
+                # 預設為私人 (False)，密碼為 None
+                success, msg = dm.create_trip(st.session_state.user, c_secret, c_name, False, None)
                 if success: st.session_state.dash_mode = "list"; st.rerun()
                 else: st.error(msg)
             if cc2.form_submit_button("取消", use_container_width=True):
