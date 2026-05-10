@@ -322,6 +322,11 @@ footer { display: none !important; }
     background: rgba(99,179,237,0.12) !important;
 }
 
+/* 隱藏 Streamlit 表單內礙眼的 "Press Enter to submit form" 提示 */
+[data-testid="stFormSubmitButtonInstructions"] {
+    display: none !important;
+}
+
 /* 桌機上隱藏頂部導覽，手機上隱藏側邊欄 */
 @media (min-width: 768px) {
     .top-nav-bar { display: none !important; }
