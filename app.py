@@ -369,8 +369,17 @@ elif page == "⚙️ 旅程設定":
             st.success("✅ 匯率已手動儲存！")
             st.rerun()
 
-    # 檢查是否有手動修改但未儲存
-    has_unsaved = (j != r.get("JPY") or u != r.get("USD") or e != r.get("EUR") or k != r.get("KRW"))
+    # 檢查是否有手動修改但未儲存 (加入四捨五入比對，避免微小精確度誤差)
+    def is_diff(v1, v2):
+        try: return round(float(v1), 4) != round(float(v2), 4)
+        except: return False
+    
+    has_unsaved = (
+        is_diff(j, r.get("JPY", 0)) or 
+        is_diff(u, r.get("USD", 0)) or 
+        is_diff(e, r.get("EUR", 0)) or 
+        is_diff(k, r.get("KRW", 0))
+    )
     if has_unsaved:
         st.warning("⚠️ 偵測到手動輸入的匯率尚未儲存，若點擊下方按鈕將會覆蓋您的修改。")
 
