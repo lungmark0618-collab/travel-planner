@@ -1020,7 +1020,7 @@ elif page == "⚙️ 旅程設定":
                     st.error(f"❌ 無法取得即時匯率，請確認網路連線。錯誤：{e}")
 
     st.markdown("---")
-    st.markdown("#### 🔒 安全設定
+    st.markdown("#### 🔒 安全設定")
     with st.expander("🔑 設定或修改存取密碼"):
         st.markdown("<small style='color:#94a3b8;'>設定密碼後，其他人就算知道你的暗號也無法進入。</small>", unsafe_allow_html=True)
         current_pwd = data.get("password")
@@ -1036,7 +1036,7 @@ elif page == "⚙️ 旅程設定":
             st.success("✅ 密碼設定已更新！")
             st.rerun()
 
-    #### ⚠️ 危險區域")
+    st.markdown("#### ⚠️ 危險區域")
     with st.expander("🗑️ 清除所有資料（不可恢復！）"):
         st.warning("這個操作將會永久刪除所有行程和記帳資料，無法恢復！")
         if st.button("🗑️ 確認清除所有資料", type="secondary", use_container_width=True):
