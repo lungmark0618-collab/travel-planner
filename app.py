@@ -24,12 +24,8 @@ st.set_page_config(
 # ─── 常數設定 ──────────────────────────────────────────────────
 CATEGORIES = ["食物", "交通", "住宿", "購物", "門票", "其他"]
 CATEGORY_COLORS = {
-    "交通": "#63b3ed",
-    "食物": "#f6ad55",
-    "住宿": "#48bb78",
-    "購物": "#ed64a1",
-    "門票": "#9f7aea",
-    "其他": "#a0aec0"
+    "交通": "#63b3ed", "食物": "#f6ad55", "住宿": "#48bb78", 
+    "購物": "#ed64a1", "門票": "#9f7aea", "其他": "#a0aec0"
 }
 
 # ─── CSS 樣式 ──────────────────────────────────────────────────
@@ -45,41 +41,47 @@ header {visibility: hidden;}
     font-family: 'Inter', sans-serif;
 }
 
+/* 卡片式表單 */
 [data-testid="stVerticalBlock"] > div:has(div.stForm) {
     background: #1a2035;
-    padding: 20px;
-    border-radius: 15px;
+    padding: 24px;
+    border-radius: 16px;
     border: 1px solid #2d3748;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
-[data-testid="stFormSubmitButtonInstructions"] {
-    display: none !important;
-}
+/* 隱藏表單提示 */
+[data-testid="stFormSubmitButtonInstructions"] { display: none !important; }
 
-/* 底部導覽列 (手機版專屬) */
-.mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #1a2035;
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    border-top: 1px solid #2d3748;
-    z-index: 1000;
-}
-
+/* 自訂行程卡片 */
 .timeline-item {
-    background: #1e2538;
+    background: linear-gradient(145deg, #232a3d, #1a2035);
+    border: 1px solid #2d3748;
     border-left: 4px solid #4299e1;
-    padding: 12px 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* 支出卡片 */
+.expense-card {
+    background: #1a2035;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+    padding: 16px;
     margin-bottom: 10px;
-    border-radius: 0 8px 8px 0;
+}
+
+/* 底部導覽列 (手機版) */
+.mobile-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #1a2035; display: flex; justify-content: space-around;
+    padding: 12px 0; border-top: 1px solid #2d3748; z-index: 1000;
 }
 
 @media (max-width: 767px) {
-    .stApp { padding-bottom: 80px; }
+    .stApp { padding-bottom: 90px; }
     section[data-testid="stSidebar"] { display: none !important; }
 }
 </style>
@@ -89,13 +91,10 @@ header {visibility: hidden;}
 if "user" not in st.session_state: st.session_state.user = None
 if "trip_code" not in st.session_state: st.session_state.trip_code = None
 if "auth_page" not in st.session_state: st.session_state.auth_page = "login"
-if "edit_item_id" not in st.session_state: st.session_state.edit_item_id = None
-if "expense_from_item" not in st.session_state: st.session_state.expense_from_item = None
-if "edit_expense_id" not in st.session_state: st.session_state.edit_expense_id = None
 
 # ─── 帳號層：登入/註冊 ───────────────────────────────────────────
 if st.session_state.user is None:
-    st.markdown("<div style='text-align:center; padding: 40px 0;'><h1 style='font-size:3rem; margin:0;'>✈️ 旅伴助手</h1><p style='color:#94a3b8;'>你的專屬旅遊管家</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; padding: 40px 0;'><h1 style='font-size:3.5rem; margin:0;'>✈️ 旅伴助手</h1><p style='color:#94a3b8;'>你的專屬旅遊管家</p></div>", unsafe_allow_html=True)
     
     if st.session_state.auth_page == "login":
         with st.form("login_form"):
@@ -107,8 +106,7 @@ if st.session_state.user is None:
                 if user_data:
                     st.session_state.user = u
                     st.rerun()
-                else:
-                    st.error(msg)
+                else: st.error(msg)
         if st.button("還沒有帳號？點此註冊", use_container_width=True):
             st.session_state.auth_page = "register"; st.rerun()
     else:
@@ -133,8 +131,8 @@ users_db = dm._load_json(dm.USERS_FILE, {})
 user_info = users_db.get(st.session_state.user)
 
 if st.session_state.trip_code is None:
-    st.markdown(f"## 你好，{st.session_state.user} 👋")
-    st.markdown(f"<p style='color:#63b3ed; font-weight:700;'>旅伴序號：{user_info['user_id']}</p>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='margin-bottom:0;'>你好，{st.session_state.user} 👋</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:#63b3ed; font-weight:700; font-size:1.2rem;'>旅伴序號：{user_info['user_id']}</p>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -150,22 +148,23 @@ if st.session_state.trip_code is None:
         with st.form("create_trip_form"):
             st.markdown("### 🌟 建立全新旅程")
             c_name = st.text_input("旅程名稱", placeholder="例如：我的日本行")
-            c_secret = st.text_input("旅程暗號 (分享用)", placeholder="請輸入暗號...")
-            c_privacy = st.radio("隱私設定", ["🌐 公開 (可被搜尋)", "🔒 私人"], horizontal=True)
+            c_secret = st.text_input("旅程暗號", placeholder="請輸入自訂暗號...")
+            c_privacy = st.radio("隱私設定", ["🌐 公開 (可搜尋)", "🔒 私人"], horizontal=True)
             c_pwd = st.text_input("存取密碼 (選填)", type="password")
-            if st.form_submit_button("確定建立", use_container_width=True):
+            cc1, cc2 = st.columns(2)
+            if cc1.form_submit_button("確定建立", use_container_width=True):
                 success, msg = dm.create_trip(st.session_state.user, c_secret, c_name, "公開" in c_privacy, c_pwd if c_pwd else None)
                 if success:
                     st.session_state.dash_mode = "list"; st.rerun()
                 else: st.error(msg)
-            if st.form_submit_button("取消", use_container_width=True):
+            if cc2.form_submit_button("取消", use_container_width=True):
                 st.session_state.dash_mode = "list"; st.rerun()
     
     elif mode == "join":
         with st.form("join_form"):
             st.markdown("### 👥 加入旅程")
-            j_secret = st.text_input("請輸入暗號")
-            if st.form_submit_button("搜尋", use_container_width=True):
+            j_secret = st.text_input("請輸入旅程暗號")
+            if st.form_submit_button("🔍 搜尋旅程", use_container_width=True):
                 info = dm.get_trip_info(j_secret)
                 if info: st.session_state.pending_join = j_secret
                 else: st.error("找不到此旅程")
@@ -173,9 +172,9 @@ if st.session_state.trip_code is None:
         if "pending_join" in st.session_state:
             s = st.session_state.pending_join
             info = dm.get_trip_info(s)
-            st.info(f"📍 找到旅程：**{info['trip_name']}** (由 {info['owner_username']} 建立)")
+            st.info(f"📍 找到旅程：**{info['trip_name']}** (由 {info['owner_username']} {info['owner_id']} 建立)")
             with st.form("join_confirm"):
-                j_pwd = st.text_input("密碼", type="password") if info['password'] else ""
+                j_pwd = st.text_input("請輸入存取密碼", type="password") if info['password'] else ""
                 if st.form_submit_button("確認加入", use_container_width=True):
                     success, msg = dm.join_trip(st.session_state.user, s, j_pwd)
                     if success:
@@ -198,58 +197,52 @@ if st.session_state.trip_code is None:
                         if st.button("進入 ➡️", key=f"go_{s}", use_container_width=True):
                             st.session_state.trip_code = s; st.rerun()
 
-    if st.button("🚪 登出帳號", use_container_width=True):
+    st.markdown("---")
+    if st.button("🚪 登出帳號", use_container_width=True, type="secondary"):
         st.session_state.user = None; st.rerun()
     st.stop()
 
 # ─── 旅程內部層 ────────────────────────────────────────────────
 trip_code = st.session_state.trip_code
 data = dm.load_data(trip_code)
-trip_info = dm.get_trip_info(trip_code)
+trip_meta = dm.get_trip_info(trip_code)
 
-# 導覽列
+# 底部導覽列
 cols = st.columns(4)
-nav_keys = ["🏠 總覽看板", "📅 行程規劃", "💰 記帳本", "⚙️ 旅程設定"]
-for i, (icon, label, key) in enumerate(NAV_ITEMS := [("🏠","總覽","🏠 總覽看板"),("📅","行程","📅 行程規劃"),("💰","記帳","💰 記帳本"),("⚙️","設定","⚙️ 旅程設定")]):
-    if cols[i].button(f"{icon}\n{label}", key=f"nav_{key}", use_container_width=True):
+NAV_ITEMS = [("🏠","總覽","🏠 總覽看板"), ("📅","行程","📅 行程規劃"), ("💰","記帳","💰 記帳本"), ("⚙️","設定","⚙️ 旅程設定")]
+for idx, (icon, label, key) in enumerate(NAV_ITEMS):
+    if cols[idx].button(f"{icon}\n{label}", key=f"nav_{key}", use_container_width=True):
         st.session_state.page = key; st.rerun()
 
 page = st.session_state.get("page", "🏠 總覽看板")
 
-# 頂部標題
+# 標題
 t1, t2 = st.columns([8, 2])
-with t1: st.markdown(f"### {trip_info['trip_name']}"); st.caption(f"🔑 {trip_code} | 👤 {trip_info['owner_username']}")
+with t1:
+    st.markdown(f"### {trip_meta['trip_name'] if trip_meta else data['trip_name']}")
+    st.caption(f"🔑 暗號: {trip_code} | 👤 持有人: {trip_meta['owner_username'] if trip_meta else 'Unknown'}")
 with t2:
     if st.button("🚪 退出", use_container_width=True): st.session_state.trip_code = None; st.rerun()
 st.markdown("---")
 
 # 頁面邏輯
 if page == "🏠 總覽看板":
-    # ── 預算管理區 ──
     budget = data["total_budget_twd"]
     spent = sum(e["amount_twd"] for e in data["expenses"])
-    
     if budget == 0:
-        st.warning("⚠️ **你尚未設定旅程預算！**")
-        with st.expander("🚀 點此立即快速設定預算"):
-            new_b = st.number_input("預計旅費 (台幣 TWD)", min_value=0, step=1000, value=0)
-            if st.button("儲存預算", use_container_width=True):
-                data["total_budget_twd"] = new_b
-                dm.save_data(data, trip_code)
-                st.rerun()
+        st.warning("⚠️ **尚未設定預算！**")
+        with st.expander("🚀 快速設定預算"):
+            new_b = st.number_input("設定總預算 (TWD)", min_value=0, step=1000)
+            if st.button("儲存預算"): data["total_budget_twd"] = new_b; dm.save_data(data, trip_code); st.rerun()
     else:
         spent_pct = min(spent / budget, 1.0)
         st.markdown(f"#### 💰 預算進度：{spent_pct*100:.1f}%")
         color = "#f6ad55" if spent_pct < 0.8 else "#f56565"
         st.markdown(f'<div style="background:#2d3748;height:24px;border-radius:10px;overflow:hidden;"><div style="background:{color};width:{spent_pct*100}%;height:100%;"></div></div>', unsafe_allow_html=True)
-        st.markdown(f"<div style='display:flex;justify-content:space-between;color:#94a3b8;'><span>已花 NT${spent:,.0f}</span><span>預算 NT${budget:,.0f}</span></div>", unsafe_allow_html=True)
-        
-        # 快速調整預算
-        with st.expander("🛠️ 快速調整預算"):
+        st.markdown(f"<div style='display:flex;justify-content:space-between;color:#94a3b8;font-size:0.9rem;'><span>已花 NT${spent:,.0f}</span><span>預算 NT${budget:,.0f}</span></div>", unsafe_allow_html=True)
+        with st.expander("🛠️ 調整預算"):
             adj_b = st.number_input("修改預算總額", value=float(budget), step=1000.0)
-            if st.button("儲存修改", use_container_width=True):
-                data["total_budget_twd"] = adj_b
-                dm.save_data(data, trip_code); st.rerun()
+            if st.button("確認修改"): data["total_budget_twd"] = adj_b; dm.save_data(data, trip_code); st.rerun()
 
     st.markdown("---")
     c1, c2 = st.columns(2)
@@ -266,70 +259,116 @@ if page == "🏠 總覽看板":
         by_date = dm.get_expenses_by_date(data)
         if by_date:
             fig = px.bar(x=list(by_date.keys()), y=list(by_date.values()))
-            fig.update_layout(height=250, margin=dict(t=0,b=0,l=0,r=0), paper_bgcolor="rgba(0,0,0,0)")
+            fig.update_layout(height=250, margin=dict(t=0,b=20,l=0,r=0), paper_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig, use_container_width=True)
         else: st.caption("無資料")
 
     if data["itinerary"]:
         st.markdown("#### 📍 即將行程")
         for item in sorted(data["itinerary"], key=lambda x: x["date"]+x["time"])[:3]:
-            st.markdown(f"<div class='timeline-item'><b>{item['time']}</b> {item['activity']} @{item['location']}</div>", unsafe_allow_html=True)
+            st.markdown(f"""<div class='timeline-item'>
+                <div style='color:#63b3ed; font-size:0.9rem; font-weight:700;'>📅 {item['date']} {item['time']}</div>
+                <div style='font-size:1.1rem; font-weight:700; margin:4px 0;'>{item['activity']}</div>
+                <div style='color:#94a3b8; font-size:0.85rem;'>📍 {item['location']}</div>
+            </div>""", unsafe_allow_html=True)
 
 elif page == "📅 行程規劃":
-    with st.form("add_it"):
+    with st.form("add_it", clear_on_submit=True):
         st.markdown("#### ➕ 新增行程")
         c1, c2 = st.columns(2)
         d = c1.date_input("日期", date.today())
-        l = c1.text_input("地點")
-        t = c2.time_input("時間", datetime.now().time())
-        a = c2.text_input("活動")
-        n = st.text_area("備註")
-        if st.form_submit_button("加入行程", use_container_width=True):
-            dm.add_itinerary_item(str(d), t.strftime("%H:%M"), l, a, n, trip_code); st.rerun()
+        l = c1.text_input("地點", placeholder="要去哪裡？")
+        t = c2.time_input("時間", value=datetime.now().time())
+        a = c2.text_input("活動", placeholder="做什麼呢？")
+        n = st.text_area("備註 (選填)")
+        if st.form_submit_button("📌 加入行程", use_container_width=True):
+            if l and a: dm.add_itinerary_item(str(d), t.strftime("%H:%M"), l, a, n, trip_code); st.rerun()
+            else: st.warning("請填寫地點與活動")
     
     st.markdown("---")
     it = data["itinerary"]
     for day in sorted(list(set(i["date"] for i in it))):
-        st.markdown(f"**📅 {day}**")
+        st.markdown(f"#### 📅 {day}")
         for item in [i for i in it if i["date"] == day]:
-            with st.container(border=True):
-                st.markdown(f"**{item['time']} {item['activity']}** (@{item['location']})")
-                if st.button("🗑️ 刪除", key=f"del_{item['id']}"):
+            with st.container():
+                st.markdown(f"""<div class='timeline-item'>
+                    <div style='display:flex; justify-content:space-between;'>
+                        <span style='color:#63b3ed; font-weight:700;'>⏰ {item['time']}</span>
+                    </div>
+                    <div style='font-size:1.2rem; font-weight:700; margin:4px 0;'>{item['activity']}</div>
+                    <div style='color:#94a3b8;'>📍 {item['location']}</div>
+                    {f"<div style='color:#718096; font-size:0.85rem; margin-top:4px;'>📝 {item['notes']}</div>" if item.get('notes') else ""}
+                </div>""", unsafe_allow_html=True)
+                if st.button("🗑️ 刪除行程", key=f"del_{item['id']}", use_container_width=True):
                     dm.delete_itinerary_item(item['id'], trip_code); st.rerun()
 
 elif page == "💰 記帳本":
-    with st.form("add_exp"):
+    with st.form("add_exp", clear_on_submit=True):
         st.markdown("#### ➕ 新增支出")
         c1, c2 = st.columns(2)
         d = c1.date_input("日期", date.today())
         cat = c1.selectbox("分類", CATEGORIES)
         cur = c2.selectbox("幣別", ["JPY","TWD","USD","EUR","KRW"])
-        amt = c2.number_input("金額", min_value=0.0)
-        desc = st.text_input("說明")
-        if st.form_submit_button("記錄支出", use_container_width=True):
-            dm.add_expense(str(d), cat, desc, amt, cur, trip_code); st.rerun()
+        amt = c2.number_input("金額", min_value=0.0, step=100.0)
+        desc = st.text_input("說明", placeholder="買了什麼？")
+        if st.form_submit_button("💰 記錄支出", use_container_width=True):
+            if amt > 0: dm.add_expense(str(d), cat, desc, amt, cur, trip_code); st.rerun()
+            else: st.warning("請輸入金額")
     
     st.markdown("---")
     for e in sorted(data["expenses"], key=lambda x: x["date"], reverse=True):
-        with st.container(border=True):
-            st.markdown(f"**{e['category']}** {e['description']}")
-            st.caption(f"{e['date']} · {e['amount_original']} {e['currency']}")
-            st.markdown(f"<span style='color:#f6ad55; font-weight:700;'>NT${e['amount_twd']:,.0f}</span>", unsafe_allow_html=True)
-            if st.button("🗑️", key=f"delexp_{e['id']}"):
+        with st.container():
+            st.markdown(f"""<div class='expense-card'>
+                <div style='display:flex; justify-content:space-between;'>
+                    <span style='font-weight:700; font-size:1.1rem;'>{e['category']}</span>
+                    <span style='color:#f6ad55; font-weight:800; font-size:1.2rem;'>NT${e['amount_twd']:,.0f}</span>
+                </div>
+                <div style='color:#e2e8f0; margin-top:4px;'>{e['description'] or '無說明'}</div>
+                <div style='color:#94a3b8; font-size:0.85rem; margin-top:4px;'>📅 {e['date']} · {e['amount_original']:,.0f} {e['currency']}</div>
+            </div>""", unsafe_allow_html=True)
+            if st.button("🗑️ 刪除此筆", key=f"delexp_{e['id']}", use_container_width=True):
                 dm.delete_expense(e['id'], trip_code); st.rerun()
 
 elif page == "⚙️ 旅程設定":
-    with st.form("set"):
-        st.markdown("#### ⚙️ 設定")
-        n = st.text_input("名稱", data["trip_name"])
-        b = st.number_input("預算", value=float(data["total_budget_twd"]))
-        if st.form_submit_button("儲存"):
-            dm.update_settings(n, b, data["exchange_rates"], trip_code); st.rerun()
-    
-    if st.button("🌐 更新即時匯率", use_container_width=True):
-        resp = requests.get("https://open.er-api.com/v6/latest/TWD").json()
-        fx = resp.get("rates", {})
+    with st.form("set_meta"):
+        st.markdown("#### ⚙️ 旅程基本設定")
+        n = st.text_input("旅程名稱", data["trip_name"])
+        b = st.number_input("總預算 (TWD)", value=float(data["total_budget_twd"]))
+        
+        st.markdown("#### 🔒 隱私與密碼")
+        is_pub = st.checkbox("設定為公開 (可被搜尋)", value=trip_meta.get("is_public", True))
+        pwd = st.text_input("修改存取密碼", value=trip_meta.get("password", ""), type="password", placeholder="留空代表不設密碼")
+        
+        if st.form_submit_button("💾 儲存修改"):
+            # 更新 data
+            data["trip_name"] = n
+            data["total_budget_twd"] = b
+            data["password"] = pwd if pwd else None
+            dm.save_data(data, trip_code)
+            # 更新 metadata
+            meta_db = dm._load_json(dm.TRIPS_META_FILE, {})
+            if trip_code in meta_db:
+                meta_db[trip_code].update({"trip_name": n, "is_public": is_pub, "password": pwd if pwd else None})
+                dm._save_json(dm.TRIPS_META_FILE, meta_db)
+            st.success("✅ 設定已儲存！"); st.rerun()
+
+    with st.form("set_rates"):
+        st.markdown("#### 💱 匯率設定 (1 外幣 = 多少台幣)")
         r = data["exchange_rates"]
-        for c in ["JPY","USD","EUR","KRW"]:
-            if c in fx: r[c] = round(1/fx[c], 5)
-        dm.save_data(data, trip_code); st.success("匯率已更新！")
+        c1, c2 = st.columns(2)
+        j = c1.number_input("🇯🇵 JPY", value=float(r.get("JPY", 0.215)), format="%.4f")
+        u = c1.number_input("🇺🇸 USD", value=float(r.get("USD", 32.0)), format="%.2f")
+        e = c2.number_input("🇪🇺 EUR", value=float(r.get("EUR", 35.0)), format="%.2f")
+        k = c2.number_input("🇰🇷 KRW", value=float(r.get("KRW", 0.024)), format="%.4f")
+        if st.form_submit_button("💾 儲存匯率"):
+            data["exchange_rates"] = {"JPY":j, "USD":u, "EUR":e, "KRW":k}
+            dm.save_data(data, trip_code); st.success("匯率已更新！"); st.rerun()
+
+    if st.button("🌐 從網路更新即時匯率", use_container_width=True):
+        try:
+            fx = requests.get("https://open.er-api.com/v6/latest/TWD").json().get("rates", {})
+            r = data["exchange_rates"]
+            for cur in ["JPY","USD","EUR","KRW"]:
+                if cur in fx: r[cur] = round(1/fx[cur], 5)
+            dm.save_data(data, trip_code); st.success("已取得最新市場匯率！"); st.rerun()
+        except: st.error("無法連線至匯率伺服器")
