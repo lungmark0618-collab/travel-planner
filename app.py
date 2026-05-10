@@ -210,7 +210,15 @@ for idx, (icon, label, key) in enumerate([("🏠","總覽","🏠 總覽看板"),
         st.session_state.page = key; st.rerun()
 
 page = st.session_state.get("page", "🏠 總覽看板")
-st.markdown(f"### {trip_meta['trip_name'] if trip_meta else data['trip_name']} | 🔑 {trip_code}")
+
+# 頁面標題列 (增加返回儀表板按鈕)
+t1, t2 = st.columns([7, 3])
+with t1:
+    st.markdown(f"### {trip_meta['trip_name'] if trip_meta else data['trip_name']}")
+    st.caption(f"🔑 暗號: {trip_code} | 👤 持有人: {trip_meta['owner_username'] if trip_meta else 'Unknown'}")
+with t2:
+    if st.button("⬅️ 返回儀表板", use_container_width=True):
+        st.session_state.trip_code = None; st.rerun()
 st.markdown("---")
 
 if page == "🏠 總覽看板":
