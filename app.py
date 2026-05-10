@@ -217,6 +217,10 @@ trip_code = st.session_state.trip_code
 data = dm.load_data(trip_code)
 trip_meta = dm.get_trip_info(trip_code)
 
+# 確保匯率版本號存在 (用於強制刷新輸入框)
+if "rate_ver" not in st.session_state: st.session_state.rate_ver = 0
+rv = st.session_state.rate_ver
+
 # 底部導覽
 cols = st.columns(4)
 for idx, (icon, label, key) in enumerate([("🏠","總覽","🏠 總覽看板"), ("📅","行程","📅 行程規劃"), ("💰","記帳","💰 記帳本"), ("⚙️","設定","⚙️ 旅程設定")]):
@@ -359,16 +363,15 @@ elif page == "⚙️ 旅程設定":
         st.markdown("#### 💱 匯率設定 (1 外幣 = 多少台幣)")
         r = data["exchange_rates"]
         c1, c2 = st.columns(2)
-        j = c1.number_input("🇯🇵 JPY", value=float(r.get("JPY", 0.215)), format="%.4f", key="input_jpy")
-        u = c1.number_input("🇺🇸 USD", value=float(r.get("USD", 32.0)), format="%.2f", key="input_usd")
-        e = c2.number_input("🇪🇺 EUR", value=float(r.get("EUR", 35.0)), format="%.2f", key="input_eur")
-        k = c2.number_input("🇰🇷 KRW", value=float(r.get("KRW", 0.024)), format="%.4f", key="input_krw")
+        # 使用 rv (rate_ver) 動態產生 key，強制 Widget 刷新
+        j = c1.number_input("🇯🇵 JPY", value=float(r.get("JPY", 0.215)), format="%.4f", key=f"jpy_{rv}")
+        u = c1.number_input("🇺🇸 USD", value=float(r.get("USD", 32.0)), format="%.2f", key=f"usd_{rv}")
+        e = c2.number_input("🇪🇺 EUR", value=float(r.get("EUR", 35.0)), format="%.2f", key=f"eur_{rv}")
+        k = c2.number_input("🇰🇷 KRW", value=float(r.get("KRW", 0.024)), format="%.4f", key=f"krw_{rv}")
         if st.form_submit_button("💾 儲存匯率", use_container_width=True):
             data["exchange_rates"] = {"JPY":j, "USD":u, "EUR":e, "KRW":k}
             dm.save_data(data, trip_code)
-            # 強制清除輸入框的快取，讓它重新讀取儲存後的檔案
-            for key in ["input_jpy", "input_usd", "input_eur", "input_krw"]:
-                if key in st.session_state: del st.session_state[key]
+            st.session_state.rate_ver += 1 # 增加版本號，強制刷新
             st.success("✅ 匯率已手動儲存！")
             st.rerun()
 
