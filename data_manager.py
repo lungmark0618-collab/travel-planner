@@ -15,7 +15,7 @@ def get_file_path(user_key):
 
 DEFAULT_DATA = {
     "trip_name": "我的新旅程",
-    "total_budget_twd": 50000,
+    "total_budget_twd": 0,
     "exchange_rates": {
         "JPY": 0.215,
         "USD": 32.2,
