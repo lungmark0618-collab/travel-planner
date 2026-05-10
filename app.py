@@ -385,10 +385,23 @@ elif page == "⚙️ 旅程設定":
         u = c1.number_input("🇺🇸 USD", value=float(r.get("USD", 32.0)), format="%.2f", key=f"usd_{rv}")
         e = c2.number_input("🇪🇺 EUR", value=float(r.get("EUR", 35.0)), format="%.2f", key=f"eur_{rv}")
         k = c2.number_input("🇰🇷 KRW", value=float(r.get("KRW", 0.024)), format="%.4f", key=f"krw_{rv}")
+        
         if st.form_submit_button("💾 儲存匯率", use_container_width=True):
-            data["exchange_rates"] = {"JPY":j, "USD":u, "EUR":e, "KRW":k}
+            new_rates = {"JPY":j, "USD":u, "EUR":e, "KRW":k}
+            data["exchange_rates"] = new_rates
+            
+            # 關鍵修正：同步更新所有記帳的台幣金額
+            for exp in data["expenses"]:
+                cur = exp["currency"]
+                if cur != "TWD":
+                    exp["amount_twd"] = exp["amount_original"] * new_rates.get(cur, 1.0)
+                else:
+                    exp["amount_twd"] = exp["amount_original"]
+            
             dm.save_data(data, trip_code)
-            st.session_state.rate_ver += 1; st.success("✅ 已儲存！"); st.rerun()
+            st.session_state.rate_ver += 1
+            st.success("✅ 匯率已更新，且所有記帳金額已同步重算！")
+            st.rerun()
 
     st.markdown("<p style='color:#a0aec0; font-size:0.85rem;'>💡 提醒：手動修改後請先儲存再進行網路更新。</p>", unsafe_allow_html=True)
     if st.button("🌐 更新網路即時匯率", use_container_width=True):
@@ -400,12 +413,23 @@ elif page == "⚙️ 旅程設定":
                     resp = requests.get(url, timeout=5)
                     if resp.status_code == 200:
                         fx = resp.json().get("rates", {})
-                        new_rates = {}
+                        updated_rates = {}
                         for cur in ["JPY","USD","EUR","KRW"]:
-                            if cur in fx: new_rates[cur] = round(1 / fx[cur], 4)
-                        data["exchange_rates"].update(new_rates)
-                        dm.save_data(data, trip_code); success_flag = True; break
+                            if cur in fx: updated_rates[cur] = round(1 / fx[cur], 4)
+                        
+                        data["exchange_rates"].update(updated_rates)
+                        
+                        # 同步更新所有記帳的台幣金額
+                        for exp in data["expenses"]:
+                            c = exp["currency"]
+                            if c != "TWD":
+                                exp["amount_twd"] = exp["amount_original"] * data["exchange_rates"].get(c, 1.0)
+                            else:
+                                exp["amount_twd"] = exp["amount_original"]
+                        
+                        dm.save_data(data, trip_code)
+                        success_flag = True; break
                 except: continue
         if success_flag:
-            st.session_state.rate_ver += 1; msg_area.success("✅ 成功！"); st.rerun()
+            st.session_state.rate_ver += 1; msg_area.success("✅ 成功！記帳金額已同步更新。"); st.rerun()
         else: msg_area.error("❌ 失敗")
