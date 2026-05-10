@@ -113,6 +113,7 @@ if st.session_state.user is None:
         with st.form("register_form"):
             st.markdown("### 📝 註冊新帳號")
             u = st.text_input("使用者名稱")
+            st.markdown("<p style='color:#f6e05e; font-size:0.8rem; margin-top:-15px;'>⚠️ 提醒：使用者名稱設定後即無法修改，請慎選。</p>", unsafe_allow_html=True)
             p = st.text_input("密碼", type="password")
             if st.form_submit_button("完成註冊", use_container_width=True):
                 if len(u) < 2 or len(p) < 4: st.warning("請填寫正確資訊")
