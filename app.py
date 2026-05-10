@@ -186,14 +186,59 @@ if st.session_state.trip_code is None:
                         if st.button("進入 ➡️", key=f"go_{s}", use_container_width=True):
                             st.session_state.trip_code = s; st.rerun()
 
+    # ─── 🔐 系統管理員後台 (僅 mark 可見) ───────────────────────
+    if st.session_state.user == "mark":
+        with st.expander("🔐 系統管理員後台", expanded=False):
+            st.markdown("### 👥 使用者管理")
+            all_users = dm._load_json(dm.USERS_FILE, {})
+            st.metric("目前總註冊人數", len(all_users))
+            
+            # 建立使用者清單表格
+            user_list = []
+            for uname, info in all_users.items():
+                user_list.append({"使用者名稱": uname, "序號": info.get("user_id")})
+            
+            if user_list:
+                df = pd.DataFrame(user_list)
+                st.dataframe(df, use_container_width=True)
+                
+                # 管理操作：刪除特定使用者
+                st.markdown("#### ⚡ 強制管理操作")
+                target_u = st.selectbox("選擇要管理的使用者", list(all_users.keys()), key="admin_target")
+                if target_u == "mark":
+                    st.caption("無法刪除管理員自己")
+                else:
+                    if st.button(f"🧨 強制刪除帳號: {target_u}", use_container_width=True):
+                        success, msg = dm.delete_user(target_u)
+                        if success: st.success(f"已刪除 {target_u}"); st.rerun()
+                        else: st.error(msg)
+            else:
+                st.caption("目前尚無其他使用者")
+
     st.markdown("---")
     with st.expander("👤 帳號設定"):
-        new_p = st.text_input("修改登入密碼", type="password")
-        if st.button("💾 確定修改密碼", use_container_width=True):
+        st.markdown("#### 🔒 修改密碼")
+        new_p = st.text_input("輸入新密碼", type="password")
+        if st.button("💾 儲存新密碼", use_container_width=True):
             if len(new_p) >= 4:
                 success, msg = dm.update_user_password(st.session_state.user, new_p)
                 if success: st.success(msg)
                 else: st.error(msg)
+            else: st.warning("密碼長度需至少 4 位")
+        
+        st.markdown("---")
+        st.markdown("#### 🧨 危險區域")
+        st.caption("警告：刪除帳號是不可逆的動作，所有旅程權限將會消失。")
+        confirm = st.checkbox("我確定要永久刪除我的帳號")
+        if st.button("❌ 刪除帳號", use_container_width=True, type="secondary", disabled=not confirm):
+            success, msg = dm.delete_user(st.session_state.user)
+            if success:
+                st.session_state.user = None
+                st.session_state.trip_code = None
+                st.success("帳號已刪除，即將登出...")
+                st.rerun()
+            else:
+                st.error(msg)
     if st.button("🚪 登出帳號", use_container_width=True, type="secondary"):
         st.session_state.user = None; st.session_state.trip_code = None; st.rerun()
     st.stop()
