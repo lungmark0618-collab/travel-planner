@@ -372,19 +372,8 @@ elif page == "⚙️ 旅程設定":
             st.success("✅ 匯率已手動儲存！")
             st.rerun()
 
-    # 檢查是否有手動修改但未儲存 (加入四捨五入比對，避免微小精確度誤差)
-    def is_diff(v1, v2):
-        try: return round(float(v1), 4) != round(float(v2), 4)
-        except: return False
-    
-    has_unsaved = (
-        is_diff(j, r.get("JPY", 0)) or 
-        is_diff(u, r.get("USD", 0)) or 
-        is_diff(e, r.get("EUR", 0)) or 
-        is_diff(k, r.get("KRW", 0))
-    )
-    if has_unsaved:
-        st.warning("⚠️ 偵測到手動輸入的匯率尚未儲存，若點擊下方按鈕將會覆蓋您的修改。")
+    # 移除自動比對邏輯，改用固定提醒，避免偵測誤差導致警告消不掉
+    st.markdown("<p style='color:#a0aec0; font-size:0.85rem; margin-top:10px;'>💡 提醒：若您剛才有手動修改匯率，請先點擊上方「儲存匯率」按鈕，否則網路更新將會覆蓋您的手動修改。</p>", unsafe_allow_html=True)
 
     if st.button("🌐 更新網路即時匯率", use_container_width=True):
         # 建立備援名單 (備用多個來源，提高成功率)
