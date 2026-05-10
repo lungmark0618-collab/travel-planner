@@ -369,14 +369,20 @@ elif page == "⚙️ 旅程設定":
 
     if st.button("🌐 更新網路即時匯率", use_container_width=True):
         try:
-            resp = requests.get("https://open.er-api.com/v6/latest/TWD", timeout=5)
+            # 換成更穩定的來源並增加超時容錯
+            resp = requests.get("https://api.exchangerate-api.com/v4/latest/TWD", timeout=10)
             if resp.status_code == 200:
                 fx = resp.json().get("rates", {})
                 r = data["exchange_rates"]
+                # 計算 1 外幣 = 多少台幣 (1 / (外幣/TWD))
                 for cur in ["JPY","USD","EUR","KRW"]:
-                    if cur in fx: r[cur] = round(1/fx[cur], 5)
+                    if cur in fx:
+                        # 該 API 回傳的是 1 TWD 等於多少外幣，所以要倒過來算
+                        r[cur] = round(1 / fx[cur], 4)
                 dm.save_data(data, trip_code)
-                msg_area.success("✅ 匯率更新成功！")
+                msg_area.success("✅ 匯率已同步更新！")
                 st.rerun()
-            else: msg_area.error("❌ 伺服器異常")
-        except: msg_area.error("❌ 無法連線")
+            else:
+                msg_area.error(f"❌ 伺服器回應異常 (狀態碼: {resp.status_code})")
+        except Exception as e:
+            msg_area.error("❌ 網路連線超時，請檢查網路狀態或稍後再試")
