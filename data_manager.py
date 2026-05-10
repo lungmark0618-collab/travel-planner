@@ -1,8 +1,13 @@
 import json
 import os
+import re
 from datetime import datetime
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), "travel_data.json")
+def get_file_path(user_key="default"):
+    """根據使用者代碼產生檔案路徑"""
+    # 只允許英文字母與數字，避免檔名出錯
+    safe_key = re.sub(r'[^a-zA-Z0-9]', '_', user_key)
+    return os.path.join(os.path.dirname(__file__), f"travel_data_{safe_key}.json")
 
 DEFAULT_DATA = {
     "trip_name": "我的日本旅遊",
@@ -17,19 +22,21 @@ DEFAULT_DATA = {
     "expenses": []
 }
 
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        save_data(DEFAULT_DATA)
+def load_data(user_key="default"):
+    file_path = get_file_path(user_key)
+    if not os.path.exists(file_path):
+        save_data(DEFAULT_DATA, user_key)
         return DEFAULT_DATA.copy()
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+def save_data(data, user_key="default"):
+    file_path = get_file_path(user_key)
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-def add_itinerary_item(date, time_str, location, activity, notes=""):
-    data = load_data()
+def add_itinerary_item(date, time_str, location, activity, notes="", user_key="default"):
+    data = load_data(user_key)
     item = {
         "id": datetime.now().isoformat(),
         "date": date,
@@ -39,15 +46,15 @@ def add_itinerary_item(date, time_str, location, activity, notes=""):
         "notes": notes
     }
     data["itinerary"].append(item)
-    save_data(data)
+    save_data(data, user_key)
 
-def delete_itinerary_item(item_id):
-    data = load_data()
+def delete_itinerary_item(item_id, user_key="default"):
+    data = load_data(user_key)
     data["itinerary"] = [i for i in data["itinerary"] if i["id"] != item_id]
-    save_data(data)
+    save_data(data, user_key)
 
-def add_expense(date, category, description, amount, currency):
-    data = load_data()
+def add_expense(date, category, description, amount, currency, user_key="default"):
+    data = load_data(user_key)
     rate = data["exchange_rates"].get(currency, 1.0)
     amount_twd = round(amount * rate, 1) if currency != "TWD" else amount
     expense = {
@@ -60,15 +67,15 @@ def add_expense(date, category, description, amount, currency):
         "amount_twd": amount_twd
     }
     data["expenses"].append(expense)
-    save_data(data)
+    save_data(data, user_key)
 
-def delete_expense(expense_id):
-    data = load_data()
+def delete_expense(expense_id, user_key="default"):
+    data = load_data(user_key)
     data["expenses"] = [e for e in data["expenses"] if e["id"] != expense_id]
-    save_data(data)
+    save_data(data, user_key)
 
-def update_expense(expense_id, new_date, new_category, new_description, new_amount, new_currency):
-    data = load_data()
+def update_expense(expense_id, new_date, new_category, new_description, new_amount, new_currency, user_key="default"):
+    data = load_data(user_key)
     rate = data["exchange_rates"].get(new_currency, 1.0)
     amount_twd = round(new_amount * rate, 1) if new_currency != "TWD" else new_amount
     for e in data["expenses"]:
@@ -80,7 +87,14 @@ def update_expense(expense_id, new_date, new_category, new_description, new_amou
             e["currency"] = new_currency
             e["amount_twd"] = amount_twd
             break
-    save_data(data)
+    save_data(data, user_key)
+
+def update_settings(trip_name, budget, rates, user_key="default"):
+    data = load_data(user_key)
+    data["trip_name"] = trip_name
+    data["total_budget_twd"] = budget
+    data["exchange_rates"] = rates
+    save_data(data, user_key)
 
 
 def get_total_spent_twd(data):
