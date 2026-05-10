@@ -307,17 +307,21 @@ with st.sidebar:
     st.markdown(f"<small style='color:#64748b;'>旅程：{_sb_data['trip_name']}</small>",
                 unsafe_allow_html=True)
 
-# 手機底部 Tab Bar（用 window.top.location.href 在同一視窗切換）
+# 手機底部 Tab Bar（用 window.location 在同一視窗內切換）
 _cur = st.session_state.page
 _tab_html = '<nav class="bottom-nav" role="navigation" aria-label="主導覽">'
+_nav_keys_encoded = {
+    "🏠 總覽看板": "home",
+    "📅 行程規劃": "plan",
+    "💰 記帳本":   "money",
+    "⚙️ 旅程設定": "setting",
+}
 for icon, short, key in _nav_items:
     active_cls = "active-tab" if _cur == key else ""
-    # 用 window.top.location.href 強制在同一視窗切換（不開新分頁）
-    safe_key = key.replace("'", "\\'")
+    url_key = _nav_keys_encoded.get(key, key)
     _tab_html += f"""
         <a class="nav-btn {active_cls}" href="javascript:void(0)" onclick="
-            var base = window.top.location.pathname;
-            window.top.location.href = base + '?nav={safe_key}';
+            window.location.href = window.location.pathname + '?nav={url_key}';
         ">
             <span class="nav-icon">{icon}</span>
             <span class="nav-label">{short}</span>
@@ -326,11 +330,19 @@ _tab_html += '</nav>'
 st.markdown(_tab_html, unsafe_allow_html=True)
 
 # 處理底部導覽的 query_params 切換（給手機點擊用）
+_nav_decode = {
+    "home":    "🏠 總覽看板",
+    "plan":    "📅 行程規劃",
+    "money":   "💰 記帳本",
+    "setting": "⚙️ 旅程設定",
+}
 _qp = st.query_params.get("nav", "")
-if _qp and _qp != st.session_state.page:
-    st.session_state.page = _qp
-    st.query_params.clear()
-    st.rerun()
+if _qp:
+    _target = _nav_decode.get(_qp, _qp)
+    if _target != st.session_state.page:
+        st.session_state.page = _target
+        st.query_params.clear()
+        st.rerun()
 
 page = st.session_state.page
 
