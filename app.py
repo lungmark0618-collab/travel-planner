@@ -21,6 +21,8 @@ st.set_page_config(
 )
 
 # ─── Session State 初始化 ─────────────────────────────────────
+if "recent_trips" not in st.session_state:
+    st.session_state.recent_trips = []
 if "trip_code" not in st.session_state:
     st.session_state.trip_code = None
 if "page" not in st.session_state:
@@ -326,32 +328,43 @@ footer { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── 登入介面（旅程代碼）───────────────────────────────────────
+# ─── 登入介面（開啟旅程）───────────────────────────────────────
 if st.session_state.trip_code is None:
     st.markdown("""
-    <div style='text-align:center; padding: 60px 20px;'>
-        <h1 style='font-size:3rem'>✈️</h1>
-        <h2 style='color:#e2e8f0; margin-bottom:10px;'>歡迎來到智慧旅遊規劃師</h2>
-        <p style='color:#94a3b8; margin-bottom:30px;'>請輸入你的「旅程代碼」以開啟專屬紀錄。<br>不同代碼的資料是分開存放的，確保隱私。</p>
+    <div style='text-align:center; padding: 40px 20px;'>
+        <h1 style='font-size:3.5rem'>✈️</h1>
+        <h2 style='color:#e2e8f0; margin-bottom:10px;'>智慧旅遊管家</h2>
+        <p style='color:#94a3b8; margin-bottom:30px;'>輸入一個「旅程暗號」來開啟專屬紀錄。<br>相同暗號的人可以共同編輯資料喔！</p>
     </div>
     """, unsafe_allow_html=True)
     
     with st.form("login_form"):
-        code = st.text_input("輸入旅程代碼 (例如: mark-japan-2024)", placeholder="請輸入自訂代碼...")
-        submit = st.form_submit_button("🚀 開始我的旅程", use_container_width=True)
+        code = st.text_input("🔑 旅程暗號 (例如: 夏日東京、Mark的日本行)", placeholder="請輸入自訂暗號...")
+        submit = st.form_submit_button("🚀 開始/加入旅程", use_container_width=True)
         if submit:
             if code:
-                # 簡單清理代碼，只保留英數字
+                # 簡單清理代碼，只保留英數字與中文
                 import re
-                clean_code = re.sub(r'[^a-zA-Z0-9]', '_', code.lower())
+                clean_code = re.sub(r'[^\w\u4e00-\u9fff]', '_', code)
                 st.session_state.trip_code = clean_code
+                if clean_code not in st.session_state.recent_trips:
+                    st.session_state.recent_trips.append(clean_code)
                 st.rerun()
             else:
-                st.warning("請輸入代碼！")
+                st.warning("請輸入暗號！")
+    
+    if st.session_state.recent_trips:
+        st.markdown("<p style='color:#64748b; font-size:0.9rem; margin-top:20px;'>最近開啟過的旅程：</p>", unsafe_allow_html=True)
+        for rt in st.session_state.recent_trips:
+            if st.button(f"📍 {rt}", key=f"rt_{rt}", use_container_width=True):
+                st.session_state.trip_code = rt
+                st.rerun()
     
     st.markdown("""
-    <div style='color:#64748b; font-size:0.85rem; text-align:center; margin-top:40px;'>
-        💡 提示：你可以跟朋友約定同一個代碼來共同編輯，或是用不同代碼來分開紀錄。
+    <div style='color:#64748b; font-size:0.85rem; text-align:center; margin-top:40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px;'>
+        💡 <b>小提示：</b><br>
+        1. 輸入你獨有的暗號，就是你的私人空間。<br>
+        2. 把暗號傳給朋友，就能實現多人共同規劃！
     </div>
     """, unsafe_allow_html=True)
     st.stop()
@@ -888,6 +901,32 @@ elif page == "⚙️ 旅程設定":
             new_rates = {"JPY": jpy_rate, "USD": usd_rate, "EUR": eur_rate, "KRW": krw_rate}
             dm.update_settings(new_name, new_budget, new_rates, user_key=trip_code)
             st.success("✅ 設定已儲存！")
+            st.rerun()
+
+    st.markdown("---")
+    st.markdown("#### 🔄 切換或新增旅程")
+    st.markdown(f"<small style='color:#94a3b8;'>目前正在：<b>{trip_code}</b></small>", unsafe_allow_html=True)
+    with st.expander("🚪 開啟另一份旅程資料"):
+        new_c = st.text_input("輸入新的旅程暗號", placeholder="輸入暗號...")
+        if st.button("切換旅程", use_container_width=True):
+            if new_c:
+                import re
+                clean_new = re.sub(r'[^\w\u4e00-\u9fff]', '_', new_c)
+                st.session_state.trip_code = clean_new
+                if clean_new not in st.session_state.recent_trips:
+                    st.session_state.recent_trips.append(clean_new)
+                st.rerun()
+        
+        if len(st.session_state.recent_trips) > 1:
+            st.markdown("<small style='color:#64748b;'>切換回最近的旅程：</small>", unsafe_allow_html=True)
+            for rt in st.session_state.recent_trips:
+                if rt != trip_code:
+                    if st.button(f"🔙 {rt}", key=f"switch_{rt}", use_container_width=True):
+                        st.session_state.trip_code = rt
+                        st.rerun()
+        
+        if st.button("🚪 登出目前旅程", type="secondary", use_container_width=True):
+            st.session_state.trip_code = None
             st.rerun()
 
     st.markdown("---")
