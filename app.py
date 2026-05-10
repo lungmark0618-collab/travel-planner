@@ -147,10 +147,10 @@ if st.session_state.trip_code is None:
     if mode == "create":
         with st.form("create_trip_form"):
             st.markdown("### 🌟 建立全新旅程")
-            c_name = st.text_input("旅程名稱")
-            c_secret = st.text_input("旅程暗號")
-            c_privacy = st.radio("隱私設定", ["🌐 公開", "🔒 私人"], horizontal=True)
-            c_pwd = st.text_input("存取密碼 (選填)", type="password")
+            c_name = st.text_input("旅程名稱", placeholder="例如：2026 東京賞櫻之旅")
+            c_secret = st.text_input("旅遊備註 (旅程唯一代碼)", placeholder="設定一個專屬的識別碼")
+            c_privacy = st.radio("隱私設定", ["🌐 公開 (他人可搜尋)", "🔒 私人 (僅限自己)"], horizontal=True)
+            c_pwd = st.text_input("存取密碼 (選填)", type="password", help="設定密碼後，他人加入時需輸入")
             cc1, cc2 = st.columns(2)
             if cc1.form_submit_button("確定建立", use_container_width=True):
                 success, msg = dm.create_trip(st.session_state.user, c_secret, c_name, "公開" in c_privacy, c_pwd if c_pwd else None)
@@ -267,7 +267,7 @@ page = st.session_state.get("page", "🏠 總覽看板")
 t1, t2 = st.columns([7, 3])
 with t1:
     st.markdown(f"### {trip_meta['trip_name'] if trip_meta else data['trip_name']}")
-    st.caption(f"🔑 暗號: {trip_code} | 👤 持有人: {trip_meta['owner_username'] if trip_meta else 'Unknown'}")
+    st.caption(f"📝 旅遊備註: {trip_code} | 👤 持有人: {trip_meta['owner_username'] if trip_meta else 'Unknown'}")
 with t2:
     if st.button("⬅️ 返回儀表板", use_container_width=True):
         st.session_state.trip_code = None; st.rerun()
