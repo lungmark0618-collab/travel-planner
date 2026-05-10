@@ -92,14 +92,19 @@ if st.session_state.user is None:
     st.markdown("<p style='color:#a0aec0;'>您的隨身小管家</p>", unsafe_allow_html=True)
     
     if st.session_state.auth_page == "login":
+        # 讀取 URL 中記住的帳號
+        saved_user = st.query_params.get("remember_user", "")
         with st.form("login_form"):
             st.markdown("### 🔑 登入帳號")
-            u = st.text_input("使用者名稱")
+            u = st.text_input("使用者名稱", value=saved_user)
             p = st.text_input("密碼", type="password")
+            remember = st.checkbox("記住我 (下次自動填寫帳號)", value=bool(saved_user))
             if st.form_submit_button("登入", use_container_width=True):
                 user_data, msg = dm.login_user(u, p)
                 if user_data:
                     st.session_state.user = u
+                    if remember: st.query_params["remember_user"] = u
+                    else: st.query_params.clear()
                     st.rerun()
                 else: st.error(f"❌ {msg}")
         if st.button("還沒有帳號？點此註冊", use_container_width=True):
