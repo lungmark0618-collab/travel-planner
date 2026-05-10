@@ -386,10 +386,11 @@ elif page == "⚙️ 旅程設定":
                 
                 data["exchange_rates"].update(new_rates)
                 dm.save_data(data, trip_code)
-                # 使用 toast 或是 placeholder 顯示成功，並延遲 rerun 以確保使用者看到
-                msg_area.success("🎊 恭喜！網路匯率已同步更新成功！")
-                st.balloons() # 加入小動畫增加提示感
+                
+                # 顯示成功訊息並立刻重新整理畫面，讓輸入框顯示最新數字
+                msg_area.success("✅ 網路匯率已同步更新成功！")
+                st.rerun()
             else:
-                msg_area.error(f"❌ 伺服器回應異常")
+                msg_area.error("❌ 伺服器回應異常，請稍後再試")
         except:
             msg_area.error("❌ 網路連線超時，請稍後再試")
