@@ -129,12 +129,10 @@ if st.session_state.trip_code is None:
     st.markdown(f"<p style='color:#63b3ed; font-weight:700; font-size:1.2rem;'>旅伴序號：{user_info['user_id']}</p>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🆕 建立新旅程", use_container_width=True, type="primary"):
-            st.session_state.dash_mode = "create"; st.rerun()
-    with col2:
-        if st.button("👥 加入現有旅程", use_container_width=True):
-            st.session_state.dash_mode = "join"; st.rerun()
+    if col1.button("🆕 建立新旅程", use_container_width=True, type="primary"):
+        st.session_state.dash_mode = "create"; st.rerun()
+    if col2.button("👥 加入現有旅程", use_container_width=True):
+        st.error("⚠️ 功能維護中，暫不開放加入")
 
     mode = st.session_state.get("dash_mode", "list")
     
