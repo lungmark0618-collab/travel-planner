@@ -307,16 +307,17 @@ with st.sidebar:
     st.markdown(f"<small style='color:#64748b;'>旅程：{_sb_data['trip_name']}</small>",
                 unsafe_allow_html=True)
 
-# 手機底部 Tab Bar（用 HTML 按鈕 + JS postMessage 模擬點擊）
+# 手機底部 Tab Bar（用 window.top.location.href 在同一視窗切換）
 _cur = st.session_state.page
 _tab_html = '<nav class="bottom-nav" role="navigation" aria-label="主導覽">'
 for icon, short, key in _nav_items:
     active_cls = "active-tab" if _cur == key else ""
-    # 用 Streamlit query_params 切換頁面
+    # 用 window.top.location.href 強制在同一視窗切換（不開新分頁）
+    safe_key = key.replace("'", "\\'")
     _tab_html += f"""
-        <a class="nav-btn {active_cls}" href="?nav={key}" onclick="
-            event.preventDefault();
-            window.parent.postMessage({{type:'streamlit:setComponentValue', value:'{key}'}}, '*');
+        <a class="nav-btn {active_cls}" href="javascript:void(0)" onclick="
+            var base = window.top.location.pathname;
+            window.top.location.href = base + '?nav={safe_key}';
         ">
             <span class="nav-icon">{icon}</span>
             <span class="nav-label">{short}</span>
