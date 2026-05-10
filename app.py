@@ -359,30 +359,37 @@ elif page == "⚙️ 旅程設定":
         st.markdown("#### 💱 匯率設定 (1 外幣 = 多少台幣)")
         r = data["exchange_rates"]
         c1, c2 = st.columns(2)
-        j = c1.number_input("🇯🇵 JPY", value=float(r.get("JPY", 0.215)), format="%.4f")
-        u = c1.number_input("🇺🇸 USD", value=float(r.get("USD", 32.0)), format="%.2f")
-        e = c2.number_input("🇪🇺 EUR", value=float(r.get("EUR", 35.0)), format="%.2f")
-        k = c2.number_input("🇰🇷 KRW", value=float(r.get("KRW", 0.024)), format="%.4f")
-        if st.form_submit_button("💾 儲存匯率"):
+        j = c1.number_input("🇯🇵 JPY", value=float(r.get("JPY", 0.215)), format="%.4f", key="input_jpy")
+        u = c1.number_input("🇺🇸 USD", value=float(r.get("USD", 32.0)), format="%.2f", key="input_usd")
+        e = c2.number_input("🇪🇺 EUR", value=float(r.get("EUR", 35.0)), format="%.2f", key="input_eur")
+        k = c2.number_input("🇰🇷 KRW", value=float(r.get("KRW", 0.024)), format="%.4f", key="input_krw")
+        if st.form_submit_button("💾 儲存匯率", use_container_width=True):
             data["exchange_rates"] = {"JPY":j, "USD":u, "EUR":e, "KRW":k}
-            dm.save_data(data, trip_code); st.success("匯率已更新！"); st.rerun()
+            dm.save_data(data, trip_code)
+            st.success("✅ 匯率已手動儲存！")
+            st.rerun()
+
+    # 檢查是否有手動修改但未儲存
+    has_unsaved = (j != r.get("JPY") or u != r.get("USD") or e != r.get("EUR") or k != r.get("KRW"))
+    if has_unsaved:
+        st.warning("⚠️ 偵測到手動輸入的匯率尚未儲存，若點擊下方按鈕將會覆蓋您的修改。")
 
     if st.button("🌐 更新網路即時匯率", use_container_width=True):
         try:
-            # 換成更穩定的來源並增加超時容錯
             resp = requests.get("https://api.exchangerate-api.com/v4/latest/TWD", timeout=10)
             if resp.status_code == 200:
                 fx = resp.json().get("rates", {})
-                r = data["exchange_rates"]
-                # 計算 1 外幣 = 多少台幣 (1 / (外幣/TWD))
+                new_rates = {}
                 for cur in ["JPY","USD","EUR","KRW"]:
                     if cur in fx:
-                        # 該 API 回傳的是 1 TWD 等於多少外幣，所以要倒過來算
-                        r[cur] = round(1 / fx[cur], 4)
+                        new_rates[cur] = round(1 / fx[cur], 4)
+                
+                data["exchange_rates"].update(new_rates)
                 dm.save_data(data, trip_code)
-                msg_area.success("✅ 匯率已同步更新！")
-                st.rerun()
+                # 使用 toast 或是 placeholder 顯示成功，並延遲 rerun 以確保使用者看到
+                msg_area.success("🎊 恭喜！網路匯率已同步更新成功！")
+                st.balloons() # 加入小動畫增加提示感
             else:
-                msg_area.error(f"❌ 伺服器回應異常 (狀態碼: {resp.status_code})")
-        except Exception as e:
-            msg_area.error("❌ 網路連線超時，請檢查網路狀態或稍後再試")
+                msg_area.error(f"❌ 伺服器回應異常")
+        except:
+            msg_area.error("❌ 網路連線超時，請稍後再試")
