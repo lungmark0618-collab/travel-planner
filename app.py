@@ -25,6 +25,8 @@ if "recent_trips" not in st.session_state:
     st.session_state.recent_trips = []
 if "trip_code" not in st.session_state:
     st.session_state.trip_code = None
+if "pending_code" not in st.session_state:
+    st.session_state.pending_code = None
 if "page" not in st.session_state:
     st.session_state.page = "🏠 總覽看板"
 if "edit_item_id" not in st.session_state:
@@ -328,43 +330,73 @@ footer { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── 登入介面（開啟旅程）───────────────────────────────────────
+# ─── 登入介面（開啟旅程與防撞檢查）───────────────────────────
 if st.session_state.trip_code is None:
     st.markdown("""
-    <div style='text-align:center; padding: 40px 20px;'>
+    <div style='text-align:center; padding: 30px 20px;'>
         <h1 style='font-size:3.5rem'>✈️</h1>
         <h2 style='color:#e2e8f0; margin-bottom:10px;'>智慧旅遊管家</h2>
-        <p style='color:#94a3b8; margin-bottom:30px;'>輸入一個「旅程暗號」來開啟專屬紀錄。<br>相同暗號的人可以共同編輯資料喔！</p>
+        <p style='color:#94a3b8; margin-bottom:20px;'>輸入一個「旅程暗號」來開啟專屬紀錄。</p>
     </div>
     """, unsafe_allow_html=True)
     
-    with st.form("login_form"):
-        code = st.text_input("🔑 旅程暗號 (例如: 夏日東京、Mark的日本行)", placeholder="請輸入自訂暗號...")
-        submit = st.form_submit_button("🚀 開始/加入旅程", use_container_width=True)
-        if submit:
-            if code:
-                # 簡單清理代碼，只保留英數字與中文
-                import re
-                clean_code = re.sub(r'[^\w\u4e00-\u9fff]', '_', code)
-                st.session_state.trip_code = clean_code
-                if clean_code not in st.session_state.recent_trips:
-                    st.session_state.recent_trips.append(clean_code)
+    # 如果偵測到暗號已存在，且使用者還沒確認要加入
+    if st.session_state.pending_code:
+        p_code = st.session_state.pending_code
+        st.warning(f"⚠️ **提醒：暗號「{p_code}」已經有人使用了！**")
+        st.markdown(f"""
+        <div style='background:rgba(255,165,0,0.1); padding:15px; border-radius:10px; margin-bottom:20px;'>
+            <p style='color:#e2e8f0; font-size:0.95rem; margin-bottom:10px;'>你是要加入朋友的旅程嗎？</p>
+            <p style='color:#94a3b8; font-size:0.85rem;'>若是這只是個巧合，建議換一個更獨特的暗號以免資料混亂喔！</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        c_col1, c_col2 = st.columns(2)
+        with c_col1:
+            if st.button("👥 是的，我要加入", use_container_width=True):
+                st.session_state.trip_code = p_code
+                st.session_state.pending_code = None
+                if p_code not in st.session_state.recent_trips:
+                    st.session_state.recent_trips.append(p_code)
                 st.rerun()
-            else:
-                st.warning("請輸入暗號！")
-    
-    if st.session_state.recent_trips:
-        st.markdown("<p style='color:#64748b; font-size:0.9rem; margin-top:20px;'>最近開啟過的旅程：</p>", unsafe_allow_html=True)
-        for rt in st.session_state.recent_trips:
-            if st.button(f"📍 {rt}", key=f"rt_{rt}", use_container_width=True):
-                st.session_state.trip_code = rt
+        with c_col2:
+            if st.button("✍️ 我要換個暗號", type="secondary", use_container_width=True):
+                st.session_state.pending_code = None
                 st.rerun()
+    else:
+        with st.form("login_form"):
+            code = st.text_input("🔑 旅程暗號 (例如: 夏日東京2024)", placeholder="請輸入自訂暗號...")
+            submit = st.form_submit_button("🚀 開始/加入旅程", use_container_width=True)
+            if submit:
+                if code:
+                    import re
+                    clean_code = re.sub(r'[^\w\u4e00-\u9fff]', '_', code)
+                    # 檢查是否已存在
+                    if dm.check_exists(clean_code):
+                        # 如果已存在，進入確認模式
+                        st.session_state.pending_code = clean_code
+                        st.rerun()
+                    else:
+                        # 全新暗號，直接進入
+                        st.session_state.trip_code = clean_code
+                        if clean_code not in st.session_state.recent_trips:
+                            st.session_state.recent_trips.append(clean_code)
+                        st.rerun()
+                else:
+                    st.warning("請輸入暗號！")
+        
+        if st.session_state.recent_trips:
+            st.markdown("<p style='color:#64748b; font-size:0.9rem; margin-top:20px;'>最近開啟過的旅程：</p>", unsafe_allow_html=True)
+            for rt in st.session_state.recent_trips:
+                if st.button(f"📍 {rt}", key=f"rt_{rt}", use_container_width=True):
+                    st.session_state.trip_code = rt
+                    st.rerun()
     
     st.markdown("""
     <div style='color:#64748b; font-size:0.85rem; text-align:center; margin-top:40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px;'>
-        💡 <b>小提示：</b><br>
-        1. 輸入你獨有的暗號，就是你的私人空間。<br>
-        2. 把暗號傳給朋友，就能實現多人共同規劃！
+        💡 <b>如何保護隱私？</b><br>
+        建議暗號可以稍微複雜一點（如：<code>mark_jp_0520</code>），<br>
+        這樣就不容易跟路人甲撞名囉！
     </div>
     """, unsafe_allow_html=True)
     st.stop()

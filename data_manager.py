@@ -35,6 +35,12 @@ def save_data(data, user_key="default"):
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+def check_exists(user_key):
+    """檢查該暗號是否已經有存檔紀錄"""
+    if not user_key or user_key == "default":
+        return False
+    return os.path.exists(get_file_path(user_key))
+
 def add_itinerary_item(date, time_str, location, activity, notes="", user_key="default"):
     data = load_data(user_key)
     item = {
