@@ -366,6 +366,9 @@ elif page == "⚙️ 旅程設定":
         if st.form_submit_button("💾 儲存匯率", use_container_width=True):
             data["exchange_rates"] = {"JPY":j, "USD":u, "EUR":e, "KRW":k}
             dm.save_data(data, trip_code)
+            # 強制清除輸入框的快取，讓它重新讀取儲存後的檔案
+            for key in ["input_jpy", "input_usd", "input_eur", "input_krw"]:
+                if key in st.session_state: del st.session_state[key]
             st.success("✅ 匯率已手動儲存！")
             st.rerun()
 
