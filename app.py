@@ -120,9 +120,10 @@ if st.session_state.user is None:
                 else:
                     success, msg = dm.register_user(u, p)
                     if success:
-                        st.success(f"註冊成功！你的專屬序號是：{msg}")
+                        st.success(f"✅ 註冊成功！你的專屬序號是：{msg}")
                         st.session_state.auth_page = "login"
-                    else: st.error(msg)
+                    else: 
+                        st.error(f"❌ {msg}") # 顯示紅色的重複警告
         if st.button("返回登入", use_container_width=True):
             st.session_state.auth_page = "login"; st.rerun()
     st.stop()
@@ -378,9 +379,16 @@ elif page == "⚙️ 旅程設定":
 
     if st.button("🌐 從網路更新即時匯率", use_container_width=True):
         try:
-            fx = requests.get("https://open.er-api.com/v6/latest/TWD").json().get("rates", {})
-            r = data["exchange_rates"]
-            for cur in ["JPY","USD","EUR","KRW"]:
-                if cur in fx: r[cur] = round(1/fx[cur], 5)
-            dm.save_data(data, trip_code); st.success("已取得最新市場匯率！"); st.rerun()
-        except: st.error("無法連線至匯率伺服器")
+            resp = requests.get("https://open.er-api.com/v6/latest/TWD", timeout=5)
+            if resp.status_code == 200:
+                fx = resp.json().get("rates", {})
+                r = data["exchange_rates"]
+                for cur in ["JPY","USD","EUR","KRW"]:
+                    if cur in fx: r[cur] = round(1/fx[cur], 5)
+                dm.save_data(data, trip_code)
+                st.success("✅ 已取得最新市場匯率！")
+                st.rerun()
+            else:
+                st.error("❌ 匯率伺服器回傳異常，請稍後再試")
+        except:
+            st.error("❌ 無法連線至匯率伺服器，請檢查網路")
