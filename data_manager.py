@@ -10,16 +10,17 @@ def get_file_path(user_key="default"):
     return os.path.join(os.path.dirname(__file__), f"travel_data_{safe_key}.json")
 
 DEFAULT_DATA = {
-    "trip_name": "我的日本旅遊",
+    "trip_name": "我的新旅程",
     "total_budget_twd": 50000,
     "exchange_rates": {
-        "JPY": 0.215,   # 1 JPY = 0.215 TWD
-        "USD": 32.0,    # 1 USD = 32 TWD
-        "EUR": 35.0,    # 1 EUR = 35 TWD
-        "KRW": 0.024,  # 1 KRW = 0.024 TWD
+        "JPY": 0.215,
+        "USD": 32.2,
+        "EUR": 35.1,
+        "KRW": 0.024
     },
     "itinerary": [],
-    "expenses": []
+    "expenses": [],
+    "password": None
 }
 
 def load_data(user_key="default"):

@@ -27,6 +27,8 @@ if "trip_code" not in st.session_state:
     st.session_state.trip_code = None
 if "pending_code" not in st.session_state:
     st.session_state.pending_code = None
+if "auth_code" not in st.session_state:
+    st.session_state.auth_code = None  # 用來記錄密碼驗證過的暗號
 if "page" not in st.session_state:
     st.session_state.page = "🏠 總覽看板"
 if "edit_item_id" not in st.session_state:
@@ -330,54 +332,76 @@ footer { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── 登入介面（開啟旅程與防撞檢查）───────────────────────────
+# ─── 登入介面（暗號與密碼保護）───────────────────────────
 if st.session_state.trip_code is None:
     st.markdown("""
-    <div style='text-align:center; padding: 30px 20px;'>
+    <div style='text-align:center; padding: 20px 20px;'>
         <h1 style='font-size:3.5rem'>✈️</h1>
         <h2 style='color:#e2e8f0; margin-bottom:10px;'>智慧旅遊管家</h2>
-        <p style='color:#94a3b8; margin-bottom:20px;'>輸入一個「旅程暗號」來開啟專屬紀錄。</p>
+        <p style='color:#94a3b8; font-size:1rem;'>請輸入你的「旅程暗號」</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # 如果偵測到暗號已存在，且使用者還沒確認要加入
+    # 情況 A：偵測到暗號已存在，需要處理（可能是撞名或需要密碼）
     if st.session_state.pending_code:
         p_code = st.session_state.pending_code
-        st.warning(f"⚠️ **提醒：暗號「{p_code}」已經有人使用了！**")
-        st.markdown(f"""
-        <div style='background:rgba(255,165,0,0.1); padding:15px; border-radius:10px; margin-bottom:20px;'>
-            <p style='color:#e2e8f0; font-size:0.95rem; margin-bottom:10px;'>你是要加入朋友的旅程嗎？</p>
-            <p style='color:#94a3b8; font-size:0.85rem;'>若是這只是個巧合，建議換一個更獨特的暗號以免資料混亂喔！</p>
-        </div>
-        """, unsafe_allow_html=True)
+        data_preview = dm.load_data(p_code)
+        has_pwd = data_preview.get("password") is not None
         
-        c_col1, c_col2 = st.columns(2)
-        with c_col1:
-            if st.button("👥 是的，我要加入", use_container_width=True):
-                st.session_state.trip_code = p_code
+        if has_pwd:
+            st.info(f"🔒 **「{p_code}」已設定密碼保護**")
+            with st.form("pwd_form"):
+                pwd_input = st.text_input("請輸入密碼", type="password")
+                p_submit = st.form_submit_button("🔑 驗證並進入", use_container_width=True)
+                if p_submit:
+                    if pwd_input == data_preview["password"]:
+                        st.session_state.trip_code = p_code
+                        st.session_state.auth_code = p_code # 標記已驗證
+                        st.session_state.pending_code = None
+                        if p_code not in st.session_state.recent_trips:
+                            st.session_state.recent_trips.append(p_code)
+                        st.rerun()
+                    else:
+                        st.error("❌ 密碼錯誤！")
+            
+            if st.button("⬅️ 返回換個暗號", use_container_width=True):
                 st.session_state.pending_code = None
-                if p_code not in st.session_state.recent_trips:
-                    st.session_state.recent_trips.append(p_code)
                 st.rerun()
-        with c_col2:
-            if st.button("✍️ 我要換個暗號", type="secondary", use_container_width=True):
-                st.session_state.pending_code = None
-                st.rerun()
+        else:
+            # 沒有密碼但已有人使用（防撞警告）
+            st.warning(f"⚠️ **提醒：暗號「{p_code}」已經有人使用了！**")
+            st.markdown("""
+            <div style='background:rgba(255,165,0,0.1); padding:15px; border-radius:10px; margin-bottom:10px;'>
+                <p style='color:#e2e8f0; font-size:0.95rem; margin-bottom:5px;'>這個旅程目前沒有密碼保護。</p>
+                <p style='color:#94a3b8; font-size:0.85rem;'>你是要加入朋友的旅程？還是這只是個巧合？</p>
+            </div>
+            """, unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("👥 加入旅程", use_container_width=True):
+                    st.session_state.trip_code = p_code
+                    st.session_state.pending_code = None
+                    if p_code not in st.session_state.recent_trips:
+                        st.session_state.recent_trips.append(p_code)
+                    st.rerun()
+            with col2:
+                if st.button("✍️ 換個暗號", type="secondary", use_container_width=True):
+                    st.session_state.pending_code = None
+                    st.rerun()
     else:
+        # 情況 B：正常輸入暗號
         with st.form("login_form"):
-            code = st.text_input("🔑 旅程暗號 (例如: 夏日東京2024)", placeholder="請輸入自訂暗號...")
-            submit = st.form_submit_button("🚀 開始/加入旅程", use_container_width=True)
+            code = st.text_input("🔑 旅程暗號", placeholder="例如: Mark東京之旅")
+            submit = st.form_submit_button("🚀 開啟旅程", use_container_width=True)
             if submit:
                 if code:
                     import re
                     clean_code = re.sub(r'[^\w\u4e00-\u9fff]', '_', code)
-                    # 檢查是否已存在
                     if dm.check_exists(clean_code):
-                        # 如果已存在，進入確認模式
                         st.session_state.pending_code = clean_code
                         st.rerun()
                     else:
-                        # 全新暗號，直接進入
+                        # 全新暗號
                         st.session_state.trip_code = clean_code
                         if clean_code not in st.session_state.recent_trips:
                             st.session_state.recent_trips.append(clean_code)
@@ -386,17 +410,17 @@ if st.session_state.trip_code is None:
                     st.warning("請輸入暗號！")
         
         if st.session_state.recent_trips:
-            st.markdown("<p style='color:#64748b; font-size:0.9rem; margin-top:20px;'>最近開啟過的旅程：</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#64748b; font-size:0.8rem; margin-top:20px;'>最近開啟過的旅程：</p>", unsafe_allow_html=True)
             for rt in st.session_state.recent_trips:
                 if st.button(f"📍 {rt}", key=f"rt_{rt}", use_container_width=True):
                     st.session_state.trip_code = rt
                     st.rerun()
     
     st.markdown("""
-    <div style='color:#64748b; font-size:0.85rem; text-align:center; margin-top:40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px;'>
-        💡 <b>如何保護隱私？</b><br>
-        建議暗號可以稍微複雜一點（如：<code>mark_jp_0520</code>），<br>
-        這樣就不容易跟路人甲撞名囉！
+    <div style='color:#64748b; font-size:0.8rem; text-align:center; margin-top:30px;'>
+        💡 <b>安全建議：</b><br>
+        進入後可以在「設定」中建立密碼鎖，<br>
+        確保只有知道密碼的人可以查看你的資料。
     </div>
     """, unsafe_allow_html=True)
     st.stop()
@@ -996,7 +1020,23 @@ elif page == "⚙️ 旅程設定":
                     st.error(f"❌ 無法取得即時匯率，請確認網路連線。錯誤：{e}")
 
     st.markdown("---")
-    st.markdown("#### ⚠️ 危險區域")
+    st.markdown("#### 🔒 安全設定
+    with st.expander("🔑 設定或修改存取密碼"):
+        st.markdown("<small style='color:#94a3b8;'>設定密碼後，其他人就算知道你的暗號也無法進入。</small>", unsafe_allow_html=True)
+        current_pwd = data.get("password")
+        if current_pwd:
+            st.success("✅ 目前已啟用密碼保護")
+        else:
+            st.info("🔓 目前尚未設定密碼 (公開狀態)")
+            
+        new_pwd = st.text_input("設定新密碼", type="password", placeholder="留空代表取消密碼")
+        if st.button("💾 儲存密碼設定", use_container_width=True):
+            data["password"] = new_pwd if new_pwd.strip() != "" else None
+            dm.save_data(data, user_key=trip_code)
+            st.success("✅ 密碼設定已更新！")
+            st.rerun()
+
+    #### ⚠️ 危險區域")
     with st.expander("🗑️ 清除所有資料（不可恢復！）"):
         st.warning("這個操作將會永久刪除所有行程和記帳資料，無法恢復！")
         if st.button("🗑️ 確認清除所有資料", type="secondary", use_container_width=True):
