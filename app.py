@@ -168,9 +168,10 @@ if st.session_state.trip_code is None:
             with st.form("join_confirm"):
                 j_pwd = st.text_input("密碼", type="password") if info['password'] else ""
                 if st.form_submit_button("確認加入", use_container_width=True):
-                    success, msg = dm.join_trip(st.session_state.user, s, j_pwd)
-                    if success: del st.session_state.pending_join; st.session_state.dash_mode = "list"; st.rerun()
-                    else: st.error(msg)
+                    st.error("⚠️ 功能維護中，暫不開放加入")
+                    # success, msg = dm.join_trip(st.session_state.user, s, j_pwd)
+                    # if success: del st.session_state.pending_join; st.session_state.dash_mode = "list"; st.rerun()
+                    # else: st.error(msg)
 
     else:
         st.markdown("---")
