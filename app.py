@@ -21,8 +21,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-st.title("🌍 智慧旅遊規劃器")
-st.markdown("<p style='color:#a0aec0; font-size:1.1rem; margin-top:-20px;'>Smart Travel Buddy - 您的專屬旅伴</p>", unsafe_allow_html=True)
+
 
 # ─── 常數設定 ──────────────────────────────────────────────────
 CATEGORIES = ["食物", "交通", "住宿", "購物", "門票", "其他"]
