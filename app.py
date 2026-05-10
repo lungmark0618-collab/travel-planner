@@ -964,31 +964,6 @@ elif page == "⚙️ 旅程設定":
             st.success("✅ 設定已儲存！")
             st.rerun()
 
-    st.markdown("---")
-    st.markdown("#### 🔄 切換或新增旅程")
-    st.markdown(f"<small style='color:#94a3b8;'>目前正在：<b>{trip_code}</b></small>", unsafe_allow_html=True)
-    with st.expander("🚪 開啟另一份旅程資料"):
-        new_c = st.text_input("輸入新的旅程暗號", placeholder="輸入暗號...")
-        if st.button("切換旅程", use_container_width=True):
-            if new_c:
-                import re
-                clean_new = re.sub(r'[^\w\u4e00-\u9fff]', '_', new_c)
-                st.session_state.trip_code = clean_new
-                if clean_new not in st.session_state.recent_trips:
-                    st.session_state.recent_trips.append(clean_new)
-                st.rerun()
-        
-        if len(st.session_state.recent_trips) > 1:
-            st.markdown("<small style='color:#64748b;'>切換回最近的旅程：</small>", unsafe_allow_html=True)
-            for rt in st.session_state.recent_trips:
-                if rt != trip_code:
-                    if st.button(f"🔙 {rt}", key=f"switch_{rt}", use_container_width=True):
-                        st.session_state.trip_code = rt
-                        st.rerun()
-        
-        if st.button("🚪 登出目前旅程", type="secondary", use_container_width=True):
-            st.session_state.trip_code = None
-            st.rerun()
 
     st.markdown("---")
 
