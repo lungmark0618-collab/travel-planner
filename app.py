@@ -292,10 +292,9 @@ elif page == "📅 行程規劃":
     st.markdown("---")
     for item in sorted(data["itinerary"], key=lambda x: x["date"]+x["time"]):
         with st.container():
-        with st.container():
             # 使用緊湊的 HTML，避免縮進導致 Streamlit 誤判為程式碼區塊
             notes_html = f"<div style='color:#718096; font-size:0.85rem; margin-top:4px;'>📝 {item['notes']}</div>" if item.get('notes') else ""
-            html_card = f"""<div class='timeline-item'><div style='color:#63b3ed; font-weight:700;'>⏰ {item['time']} | {item['date']}</div><div style='font-size:1.2rem; font-weight:700; margin:4px 0;'>{item['activity']}</div><div style='color:#94a3b8;'>📍 {item['location']}</div>{notes_html}</div>"""
+            html_card = f"<div class='timeline-item'><div style='color:#63b3ed; font-weight:700;'>⏰ {item['time']} | {item['date']}</div><div style='font-size:1.2rem; font-weight:700; margin:4px 0;'>{item['activity']}</div><div style='color:#94a3b8;'>📍 {item['location']}</div>{notes_html}</div>"
             st.markdown(html_card, unsafe_allow_html=True)
             c1, c2, c3 = st.columns(3)
             if c1.button("📝 編輯", key=f"editit_{item['id']}", use_container_width=True):
