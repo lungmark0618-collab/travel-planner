@@ -253,6 +253,13 @@ div[data-testid="stForm"] {
 }
 
 /* ── 響應式：iPhone SE / 小螢幕（≤ 390px） ── */
+
+/* Hide Streamlit floating share/deploy/rerun buttons */
+.stDeployButton,
+[data-testid="stDeployButton"],
+[data-testid="stStatusWidget"],
+[data-testid="stDecoration"],
+footer { display: none !important; }
 @media (max-width: 390px) {
     .hero-title { font-size: 1.15rem; }
     .metric-value { font-size: 0.95rem; }
@@ -307,40 +314,24 @@ with st.sidebar:
     st.markdown(f"<small style='color:#64748b;'>旅程：{_sb_data['trip_name']}</small>",
                 unsafe_allow_html=True)
 
-# 手機底部 Tab Bar（用 window.location 在同一視窗內切換）
-_cur = st.session_state.page
-_tab_html = '<nav class="bottom-nav" role="navigation" aria-label="主導覽">'
-_nav_keys_encoded = {
-    "🏠 總覽看板": "home",
-    "📅 行程規劃": "plan",
-    "💰 記帳本":   "money",
-    "⚙️ 旅程設定": "setting",
-}
-for icon, short, key in _nav_items:
-    active_cls = "active-tab" if _cur == key else ""
-    url_key = _nav_keys_encoded.get(key, key)
-    _tab_html += f"""
-        <button class="nav-btn {active_cls}" type="button" onclick="window.location.href=window.location.pathname+'?nav={url_key}'">
-            <span class="nav-icon">{icon}</span>
-            <span class="nav-label">{short}</span>
-        </button>"""
-_tab_html += '</nav>'
-st.markdown(_tab_html, unsafe_allow_html=True)
-
-# 處理底部導覽的 query_params 切換（給手機點擊用）
-_nav_decode = {
-    "home":    "🏠 總覽看板",
-    "plan":    "📅 行程規劃",
-    "money":   "💰 記帳本",
-    "setting": "⚙️ 旅程設定",
-}
-_qp = st.query_params.get("nav", "")
-if _qp:
-    _target = _nav_decode.get(_qp, _qp)
-    if _target != st.session_state.page:
-        st.session_state.page = _target
-        st.query_params.clear()
-        st.rerun()
+# ── 底部導覽列（Streamlit 原生按鈕，全平台相容）──────────────
+_bnav_labels = [
+    ("🏠", "總覽",  "🏠 總覽看板"),
+    ("📅", "行程",  "📅 行程規劃"),
+    ("💰", "記帳",  "💰 記帳本"),
+    ("⚙️", "設定", "⚙️ 旅程設定"),
+]
+_bnav_c1, _bnav_c2, _bnav_c3, _bnav_c4 = st.columns(4)
+for _col, (_icon, _short, _key) in zip(
+        [_bnav_c1, _bnav_c2, _bnav_c3, _bnav_c4], _bnav_labels):
+    with _col:
+        _active = st.session_state.page == _key
+        _label = f"**{_icon}**\n{_short}" if _active else f"{_icon}\n{_short}"
+        if st.button(_label, key=f"bnav_{_key}", use_container_width=True):
+            st.session_state.page = _key
+            st.session_state.edit_item_id = None
+            st.session_state.expense_from_item = None
+            st.rerun()
 
 page = st.session_state.page
 
