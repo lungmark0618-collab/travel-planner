@@ -249,6 +249,14 @@ if page == "🏠 總覽看板":
             st.plotly_chart(fig, use_container_width=True)
         else: st.caption("無資料")
 
+    if data["itinerary"]:
+        st.markdown("#### 📍 即將行程")
+        for item in sorted(data["itinerary"], key=lambda x: x["date"]+x["time"])[:3]:
+            # 修正：緊湊 HTML 避免黑框框，且無備註時顯示空白
+            n_dash = f"<div style='color:#94a3b8; font-size:0.85rem; margin-top:4px;'>📝 {item['notes']}</div>" if item.get('notes') else ""
+            h_dash = f"<div class='timeline-item'><div style='color:#63b3ed; font-size:0.9rem; font-weight:700;'>📅 {item['date']} {item['time']}</div><div style='font-size:1.1rem; font-weight:700; margin:4px 0;'>{item['activity']}</div><div style='color:#94a3b8; font-size:0.85rem;'>📍 {item['location']}</div>{n_dash}</div>"
+            st.markdown(h_dash, unsafe_allow_html=True)
+
 elif page == "📅 行程規劃":
     # 編輯模式檢查
     edit_id = st.session_state.get("edit_it_id")
@@ -284,12 +292,11 @@ elif page == "📅 行程規劃":
     st.markdown("---")
     for item in sorted(data["itinerary"], key=lambda x: x["date"]+x["time"]):
         with st.container():
-            st.markdown(f"""<div class='timeline-item'>
-                <div style='color:#63b3ed; font-weight:700;'>⏰ {item['time']} | {item['date']}</div>
-                <div style='font-size:1.2rem; font-weight:700; margin:4px 0;'>{item['activity']}</div>
-                <div style='color:#94a3b8;'>📍 {item['location']}</div>
-                {f"<div style='color:#718096; font-size:0.85rem; margin-top:4px;'>📝 {item['notes']}</div>" if item.get('notes') else ""}
-            </div>""", unsafe_allow_html=True)
+        with st.container():
+            # 使用緊湊的 HTML，避免縮進導致 Streamlit 誤判為程式碼區塊
+            notes_html = f"<div style='color:#718096; font-size:0.85rem; margin-top:4px;'>📝 {item['notes']}</div>" if item.get('notes') else ""
+            html_card = f"""<div class='timeline-item'><div style='color:#63b3ed; font-weight:700;'>⏰ {item['time']} | {item['date']}</div><div style='font-size:1.2rem; font-weight:700; margin:4px 0;'>{item['activity']}</div><div style='color:#94a3b8;'>📍 {item['location']}</div>{notes_html}</div>"""
+            st.markdown(html_card, unsafe_allow_html=True)
             c1, c2, c3 = st.columns(3)
             if c1.button("📝 編輯", key=f"editit_{item['id']}", use_container_width=True):
                 st.session_state.edit_it_id = item["id"]; st.rerun()
