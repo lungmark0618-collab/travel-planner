@@ -236,3 +236,12 @@ def get_expenses_by_date(data):
         by_date[d] = by_date.get(d, 0) + e["amount_twd"]
     # 排序日期
     return dict(sorted(by_date.items()))
+
+def delete_user(username):
+    """刪除使用者帳號"""
+    db = _load_json(USERS_FILE, {})
+    if username in db:
+        del db[username]
+        _save_json(USERS_FILE, db)
+        return True, "帳號已成功刪除"
+    return False, "找不到該使用者"
