@@ -320,12 +320,10 @@ for icon, short, key in _nav_items:
     active_cls = "active-tab" if _cur == key else ""
     url_key = _nav_keys_encoded.get(key, key)
     _tab_html += f"""
-        <a class="nav-btn {active_cls}" href="javascript:void(0)" onclick="
-            window.location.href = window.location.pathname + '?nav={url_key}';
-        ">
+        <button class="nav-btn {active_cls}" type="button" onclick="window.location.href=window.location.pathname+'?nav={url_key}'">
             <span class="nav-icon">{icon}</span>
             <span class="nav-label">{short}</span>
-        </a>"""
+        </button>"""
 _tab_html += '</nav>'
 st.markdown(_tab_html, unsafe_allow_html=True)
 
