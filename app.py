@@ -428,14 +428,13 @@ elif page == "⚙️ 旅程設定":
         st.markdown("#### ⚙️ 旅程設定")
         n = st.text_input("名稱", data["trip_name"])
         b = st.number_input("預算", value=float(data["total_budget_twd"]))
-        is_pub = st.checkbox("公開", value=trip_meta.get("is_public", True))
-        pwd = st.text_input("密碼", value=trip_meta.get("password", ""), type="password")
-        if st.form_submit_button("💾 儲存修改"):
-            data["trip_name"] = n; data["total_budget_twd"] = b; data["password"] = pwd if pwd else None
+        # 隱藏隱私與密碼設定
+        if st.form_submit_button("💾 儲存修改", use_container_width=True):
+            data["trip_name"] = n; data["total_budget_twd"] = b
             dm.save_data(data, trip_code)
             m_db = dm._load_json(dm.TRIPS_META_FILE, {})
             if trip_code in m_db:
-                m_db[trip_code].update({"trip_name": n, "is_public": is_pub, "password": pwd if pwd else None})
+                m_db[trip_code].update({"trip_name": n})
                 dm._save_json(dm.TRIPS_META_FILE, m_db)
             st.success("✅ 已儲存！"); st.rerun()
 
