@@ -148,7 +148,8 @@ if st.session_state.trip_code is None:
         with st.form("create_trip_form"):
             st.markdown("### 🌟 建立全新旅程")
             c_name = st.text_input("旅程名稱", placeholder="例如：2026 東京賞櫻之旅")
-            c_secret = st.text_input("旅遊備註 (旅程唯一代碼)", placeholder="設定一個專屬的識別碼")
+            c_secret = st.text_input("旅程邀請碼 (唯一代碼)", placeholder="設定一個專屬的邀請代碼")
+            st.markdown("<p style='color:#a0aec0; font-size:0.8rem; margin-top:-15px;'>💡 這是您的旅程身份證，請設定一串獨一無二的代碼（例如：2026tokyo）。</p>", unsafe_allow_html=True)
             c_privacy = st.radio("隱私設定", ["🌐 公開 (他人可搜尋)", "🔒 私人 (僅限自己)"], horizontal=True)
             c_pwd = st.text_input("存取密碼 (選填)", type="password", help="設定密碼後，他人加入時需輸入")
             cc1, cc2 = st.columns(2)
@@ -162,7 +163,7 @@ if st.session_state.trip_code is None:
     elif mode == "join":
         with st.form("join_form"):
             st.markdown("### 👥 加入旅程")
-            j_secret = st.text_input("輸入暗號")
+            j_secret = st.text_input("輸入旅程邀請碼")
             if st.form_submit_button("🔍 搜尋", use_container_width=True):
                 info = dm.get_trip_info(j_secret)
                 if info: st.session_state.pending_join = j_secret
@@ -267,7 +268,7 @@ page = st.session_state.get("page", "🏠 總覽看板")
 t1, t2 = st.columns([7, 3])
 with t1:
     st.markdown(f"### {trip_meta['trip_name'] if trip_meta else data['trip_name']}")
-    st.caption(f"📝 旅遊備註: {trip_code} | 👤 持有人: {trip_meta['owner_username'] if trip_meta else 'Unknown'}")
+    st.caption(f"🎟️ 邀請碼: {trip_code} | 👤 持有人: {trip_meta['owner_username'] if trip_meta else 'Unknown'}")
 with t2:
     if st.button("⬅️ 返回儀表板", use_container_width=True):
         st.session_state.trip_code = None; st.rerun()
