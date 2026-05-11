@@ -361,7 +361,8 @@ if page == "🏠 總覽看板":
                 labels={'date':'', 'amount_twd':'', 'category': '分類'}
             )
             fig.update_traces(
-                marker_line_width=0,
+                marker_line_width=1,
+                marker_line_color='#1a2035',
                 hovertemplate="<b>%{fullData.name}</b><br>日期: %{x}<br>支出: NT$%{y:,.0f}<extra></extra>"
             )
             fig.update_layout(
@@ -369,20 +370,11 @@ if page == "🏠 總覽看板":
                 margin=dict(t=10,b=20,l=0,r=0), 
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
-                showlegend=True, # 顯示圖例方便使用者對應顏色
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1,
-                    font=dict(size=10, color="#a0aec0"),
-                    title=None
-                ),
+                showlegend=False, # 隱藏圖例，與左邊統一使用下方的自定義圖例
                 xaxis=dict(type='category', gridcolor='#2d3748', tickfont=dict(size=10)),
                 yaxis=dict(gridcolor='#2d3748', showticklabels=False),
                 font=dict(family="Inter", color="#a0aec0"),
-                barmode='stack' # 確保是堆疊模式
+                barmode='stack'
             )
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
         else: st.caption("無資料")
