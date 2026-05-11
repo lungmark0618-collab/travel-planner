@@ -325,22 +325,18 @@ if page == "🏠 總覽看板":
                 plot_bgcolor="rgba(0,0,0,0)",
                 showlegend=False,
             )
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-            
-            # 建立模仿參考圖的自定義圖例 (優化版面對齊)
-            legend_html = "<div style='background:#1a2035; padding:15px; border-radius:12px; border:1px solid #2d3748; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px;'>"
+            # 建立模仿參考圖的自定義圖例 (精確對齊版)
+            legend_html = "<div style='background:#1a2035; padding:18px; border-radius:12px; border:1px solid #2d3748; display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 12px 20px; align-items: center;'>"
             total_spent = sum(by_cat.values())
             for cat, val in by_cat.items():
                 pct = (val / total_spent) * 100
                 color = CATEGORY_COLORS.get(cat, "#a0aec0")
                 legend_html += f"""
-                    <div style='display:flex; align-items:center; justify-content:space-between;'>
-                        <div style='display:flex; align-items:center;'>
-                            <div style='width:12px; height:12px; background:{color}; border-radius:3px; margin-right:10px;'></div>
-                            <span style='font-size:1rem; font-weight:600;'>{cat}</span>
-                        </div>
-                        <span style='font-size:1rem; color:#a0aec0; font-family: monospace;'>{pct:>4.1f}%</span>
+                    <div style='display:flex; align-items:center;'>
+                        <div style='width:12px; height:12px; background:{color}; border-radius:3px; margin-right:10px;'></div>
+                        <span style='font-size:1.1rem; font-weight:600; color:#e2e8f0;'>{cat}</span>
                     </div>
+                    <div style='font-size:1.1rem; color:#a0aec0; text-align:right; font-family: "Courier New", monospace; font-weight:bold;'>{pct:>5.1f}%</div>
                 """
             legend_html += "</div>"
             st.markdown(legend_html, unsafe_allow_html=True)
