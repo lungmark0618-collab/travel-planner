@@ -26,8 +26,12 @@ st.set_page_config(
 # ─── 常數設定 ──────────────────────────────────────────────────
 CATEGORIES = ["食物", "交通", "住宿", "購物", "門票", "其他"]
 CATEGORY_COLORS = {
-    "交通": "#63b3ed", "食物": "#f6ad55", "住宿": "#48bb78", 
-    "購物": "#ed64a1", "門票": "#9f7aea", "其他": "#a0aec0"
+    "交通": "#5856D6", # 深靛藍
+    "食物": "#FF7E5F", # 珊瑚橘
+    "住宿": "#2ECC71", # 翡翠綠
+    "購物": "#F093FB", # 玫瑰粉
+    "門票": "#F6D365", # 琥珀黃
+    "其他": "#BDC3C7"  # 銀灰色
 }
 
 # ─── CSS 樣式 ──────────────────────────────────────────────────
@@ -296,19 +300,53 @@ if page == "🏠 總覽看板":
         st.markdown("#### 📊 分類支出")
         by_cat = dm.get_expenses_by_category(data)
         if by_cat:
-            fig = go.Figure(go.Pie(labels=list(by_cat.keys()), values=list(by_cat.values()), hole=.5))
-            fig.update_layout(height=250, margin=dict(t=0,b=0,l=0,r=0), paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            # 使用自定義顏色並優化視覺效果
+            colors = [CATEGORY_COLORS.get(cat, "#a0aec0") for cat in by_cat.keys()]
+            fig = go.Figure(go.Pie(
+                labels=list(by_cat.keys()), 
+                values=list(by_cat.values()), 
+                hole=.6,
+                marker=dict(colors=colors, line=dict(color='#1a2035', width=2)),
+                textinfo='percent',
+                hoverinfo='label+value'
+            ))
+            fig.update_layout(
+                height=250, 
+                margin=dict(t=10,b=10,l=0,r=0), 
+                paper_bgcolor="rgba(0,0,0,0)", 
+                plot_bgcolor="rgba(0,0,0,0)",
+                showlegend=False,
+                font=dict(family="Inter", color="#e2e8f0")
+            )
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
         else: st.caption("無資料")
     with c2:
         st.markdown("#### 📈 每日預算")
         by_date = dm.get_expenses_by_date(data)
         if by_date:
-            # 修正日期軸顯示問題 (圖三問題)
-            fig = px.bar(x=list(by_date.keys()), y=list(by_date.values()), labels={'x':'日期', 'y':'NT$'})
-            fig.update_layout(height=250, margin=dict(t=10,b=10,l=0,r=0), paper_bgcolor="rgba(0,0,0,0)",
-                              xaxis=dict(type='category')) # 強制類別顯示避免時間軸誤差
-            st.plotly_chart(fig, use_container_width=True)
+            # 使用更高級的藍色調並優化圖表樣式
+            fig = px.bar(
+                x=list(by_date.keys()), 
+                y=list(by_date.values()), 
+                labels={'x':'', 'y':''}
+            )
+            fig.update_traces(
+                marker_color='#7f00ff', # 換成更有質感的紫色
+                marker_line_width=0,
+                opacity=0.9,
+                hovertemplate="日期: %{x}<br>支出: NT$%{y:,.0f}<extra></extra>"
+            )
+            fig.update_layout(
+                height=250, 
+                margin=dict(t=10,b=20,l=0,r=0), 
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                showlegend=False,
+                xaxis=dict(type='category', gridcolor='#2d3748', tickfont=dict(size=10)),
+                yaxis=dict(gridcolor='#2d3748', showticklabels=False), # 隱藏側邊標籤更簡潔
+                font=dict(family="Inter", color="#a0aec0")
+            )
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
         else: st.caption("無資料")
 
     if data["itinerary"]:
@@ -399,11 +437,15 @@ elif page == "💰 記帳本":
             cur = c2.selectbox("幣別", ["JPY","TWD","USD","EUR","KRW"])
             amt = c2.number_input("金額", min_value=0.0)
             desc = st.text_input("說明", value=pending.get("desc", ""))
-            if st.form_submit_button("💰 記錄", use_container_width=True):
+            cc1, cc2 = st.columns(2)
+            if cc1.form_submit_button("💰 記錄", use_container_width=True):
                 if amt > 0:
                     dm.add_expense(str(d), cat, desc, amt, cur, trip_code)
                     if "pending_exp" in st.session_state: del st.session_state.pending_exp
                     st.rerun()
+            if cc2.form_submit_button("❌ 取消", use_container_width=True):
+                if "pending_exp" in st.session_state: del st.session_state.pending_exp
+                st.rerun()
 
     st.markdown("---")
     for e in sorted(data["expenses"], key=lambda x: x["date"], reverse=True):
