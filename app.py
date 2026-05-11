@@ -310,7 +310,7 @@ if page == "🏠 總覽看板":
                 textinfo='percent',
                 texttemplate='%{percent:.0%}', # 改為整數百分比，更簡潔
                 textfont=dict(size=14, color="white", family="Inter", weight="bold"),
-                hoverinfo='label+value'
+                hovertemplate="<b>%{label}</b><br>支出金額: NT$%{value:,.0f}<extra></extra>"
             ))
             fig.update_layout(
                 height=250, 
