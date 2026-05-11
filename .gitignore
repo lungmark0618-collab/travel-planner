@@ -3,3 +3,7 @@ __pycache__/
 *.pyo
 .env
 travel_data.json
+travel_data_*.json
+users.json
+trips_metadata.json
+test_data_manager.py

@@ -3,10 +3,13 @@ import os
 import re
 import uuid
 import hashlib
+import hmac
 
 # 檔案路徑設定
 USERS_FILE = os.path.join(os.path.dirname(__file__), "users.json")
 TRIPS_META_FILE = os.path.join(os.path.dirname(__file__), "trips_metadata.json")
+PASSWORD_HASH_ITERATIONS = 260000
+PASSWORD_HASH_PREFIX = "pbkdf2_sha256"
 
 def get_file_path(user_key):
     """根據旅程代碼取得資料檔案路徑"""
@@ -43,7 +46,41 @@ def _save_json(path, data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+    """產生包含演算法、迭代次數與 salt 的密碼雜湊。"""
+    salt = os.urandom(16)
+    derived = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        PASSWORD_HASH_ITERATIONS
+    )
+    return f"{PASSWORD_HASH_PREFIX}${PASSWORD_HASH_ITERATIONS}${salt.hex()}${derived.hex()}"
+
+def _is_legacy_sha256_hash(stored_hash):
+    return bool(re.fullmatch(r"[0-9a-f]{64}", stored_hash or ""))
+
+def verify_password(password, stored_hash):
+    if not stored_hash:
+        return False
+
+    # 舊版帳號使用純 SHA-256，保留驗證以便登入後自動升級。
+    if _is_legacy_sha256_hash(stored_hash):
+        legacy_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
+        return hmac.compare_digest(legacy_hash, stored_hash)
+
+    try:
+        algorithm, iterations, salt_hex, hash_hex = stored_hash.split("$", 3)
+        if algorithm != PASSWORD_HASH_PREFIX:
+            return False
+        derived = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            bytes.fromhex(salt_hex),
+            int(iterations)
+        )
+        return hmac.compare_digest(derived.hex(), hash_hex)
+    except (ValueError, TypeError):
+        return False
 
 def register_user(username, password):
     users = _load_json(USERS_FILE, {})
@@ -65,8 +102,14 @@ def login_user(username, password):
     users = _load_json(USERS_FILE, {})
     if username not in users:
         return None, "找不到使用者"
-    if users[username]["password"] != hash_password(password):
+    stored_hash = users[username].get("password")
+    if not verify_password(password, stored_hash):
         return None, "密碼錯誤"
+
+    if _is_legacy_sha256_hash(stored_hash):
+        users[username]["password"] = hash_password(password)
+        _save_json(USERS_FILE, users)
+
     return users[username], "登入成功"
 
 def update_user_password(username, new_password):
@@ -238,10 +281,36 @@ def get_expenses_by_date(data):
     return dict(sorted(by_date.items()))
 
 def delete_user(username):
-    """刪除使用者帳號"""
-    db = _load_json(USERS_FILE, {})
-    if username in db:
-        del db[username]
-        _save_json(USERS_FILE, db)
-        return True, "帳號已成功刪除"
-    return False, "找不到該使用者"
+    """刪除使用者帳號，並同步清理其建立的旅程與其他帳號中的引用。"""
+    users = _load_json(USERS_FILE, {})
+    if username not in users:
+        return False, "找不到該使用者"
+
+    meta = _load_json(TRIPS_META_FILE, {})
+    owned_trips = set(users[username].get("my_trips", []))
+    owned_trips.update(
+        secret for secret, info in meta.items()
+        if info.get("owner_username") == username
+    )
+
+    for secret in owned_trips:
+        meta.pop(secret, None)
+        trip_file = get_file_path(secret)
+        if os.path.exists(trip_file):
+            os.remove(trip_file)
+
+    for info in users.values():
+        info["my_trips"] = [
+            secret for secret in info.get("my_trips", [])
+            if secret not in owned_trips
+        ]
+        info["joined_trips"] = [
+            secret for secret in info.get("joined_trips", [])
+            if secret not in owned_trips
+        ]
+
+    del users[username]
+    _save_json(USERS_FILE, users)
+    _save_json(TRIPS_META_FILE, meta)
+
+    return True, "帳號與相關旅程已成功刪除"
