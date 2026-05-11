@@ -300,27 +300,51 @@ if page == "🏠 總覽看板":
         st.markdown("#### 📊 分類支出")
         by_cat = dm.get_expenses_by_category(data)
         if by_cat:
+            total_spent = sum(by_cat.values())
             # 使用自定義顏色並優化視覺效果
             colors = [CATEGORY_COLORS.get(cat, "#a0aec0") for cat in by_cat.keys()]
             fig = go.Figure(go.Pie(
                 labels=list(by_cat.keys()), 
                 values=list(by_cat.values()), 
-                hole=.6,
-                marker=dict(colors=colors, line=dict(color='#1a2035', width=2)),
-                textinfo='percent',
-                texttemplate='%{percent:.0%}', # 改為整數百分比，更簡潔
-                textfont=dict(size=14, color="white", family="Inter", weight="bold"),
-                hovertemplate="<b>%{label}</b><br>支出金額: NT$%{value:,.0f}<extra></extra>"
+                hole=.75, # 洞稍微大一點，模仿參考圖
+                marker=dict(colors=colors, line=dict(color='#1a2035', width=3)),
+                textinfo='none', # 圓餅上不顯示文字，改用下方圖例
+                hoverinfo='label+value'
             ))
+            # 在中心添加總支出文字 (模仿參考圖)
+            fig.add_annotation(
+                text=f"總支出 ≈<br>NT${total_spent:,.0f}",
+                showarrow=False,
+                font=dict(size=16, color="white", family="Inter", weight="bold"),
+                x=0.5, y=0.5
+            )
             fig.update_layout(
                 height=250, 
                 margin=dict(t=10,b=10,l=0,r=0), 
                 paper_bgcolor="rgba(0,0,0,0)", 
                 plot_bgcolor="rgba(0,0,0,0)",
                 showlegend=False,
-                font=dict(family="Inter", color="#e2e8f0")
             )
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            
+            # 建立模仿參考圖的自定義圖例
+            st.markdown("<div style='background:#1a2035; padding:15px; border-radius:12px; border:1px solid #2d3748;'>", unsafe_allow_html=True)
+            leg_cols = st.columns(2)
+            items = list(by_cat.items())
+            for i, (cat, val) in enumerate(items):
+                pct = (val / total_spent) * 100
+                color = CATEGORY_COLORS.get(cat, "#a0aec0")
+                with leg_cols[i % 2]:
+                    st.markdown(f"""
+                        <div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;'>
+                            <div style='display:flex; align-items:center;'>
+                                <div style='width:12px; height:12px; background:{color}; border-radius:3px; margin-right:8px;'></div>
+                                <span style='font-size:0.9rem; font-weight:600;'>{cat}</span>
+                            </div>
+                            <span style='font-size:0.9rem; color:#a0aec0;'>{pct:.1f}%</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
         else: st.caption("無資料")
     with c2:
         st.markdown("#### 📈 每日預算")
