@@ -324,29 +324,41 @@ if page == "🏠 總覽看板":
         else: st.caption("無資料")
     with c2:
         st.markdown("#### 📈 每日預算")
-        by_date = dm.get_expenses_by_date(data)
-        if by_date:
-            # 使用更高級的藍色調並優化圖表樣式
+        if data["expenses"]:
+            # 使用 DataFrame 建立堆疊柱狀圖
+            df = pd.DataFrame(data["expenses"])
             fig = px.bar(
-                x=list(by_date.keys()), 
-                y=list(by_date.values()), 
-                labels={'x':'', 'y':''}
+                df,
+                x='date',
+                y='amount_twd',
+                color='category',
+                color_discrete_map=CATEGORY_COLORS,
+                category_orders={"category": CATEGORIES},
+                labels={'date':'', 'amount_twd':'', 'category': '分類'}
             )
             fig.update_traces(
-                marker_color='#7f00ff', # 換成更有質感的紫色
                 marker_line_width=0,
-                opacity=0.9,
-                hovertemplate="日期: %{x}<br>支出: NT$%{y:,.0f}<extra></extra>"
+                hovertemplate="<b>%{fullData.name}</b><br>日期: %{x}<br>支出: NT$%{y:,.0f}<extra></extra>"
             )
             fig.update_layout(
                 height=250, 
                 margin=dict(t=10,b=20,l=0,r=0), 
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
-                showlegend=False,
+                showlegend=True, # 顯示圖例方便使用者對應顏色
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
+                    font=dict(size=10, color="#a0aec0"),
+                    title=None
+                ),
                 xaxis=dict(type='category', gridcolor='#2d3748', tickfont=dict(size=10)),
-                yaxis=dict(gridcolor='#2d3748', showticklabels=False), # 隱藏側邊標籤更簡潔
-                font=dict(family="Inter", color="#a0aec0")
+                yaxis=dict(gridcolor='#2d3748', showticklabels=False),
+                font=dict(family="Inter", color="#a0aec0"),
+                barmode='stack' # 確保是堆疊模式
             )
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
         else: st.caption("無資料")
