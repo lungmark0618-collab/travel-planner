@@ -327,24 +327,23 @@ if page == "🏠 總覽看板":
             )
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
             
-            # 建立模仿參考圖的自定義圖例
-            st.markdown("<div style='background:#1a2035; padding:15px; border-radius:12px; border:1px solid #2d3748;'>", unsafe_allow_html=True)
-            leg_cols = st.columns(2)
-            items = list(by_cat.items())
-            for i, (cat, val) in enumerate(items):
+            # 建立模仿參考圖的自定義圖例 (優化版面對齊)
+            legend_html = "<div style='background:#1a2035; padding:15px; border-radius:12px; border:1px solid #2d3748; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px;'>"
+            total_spent = sum(by_cat.values())
+            for cat, val in by_cat.items():
                 pct = (val / total_spent) * 100
                 color = CATEGORY_COLORS.get(cat, "#a0aec0")
-                with leg_cols[i % 2]:
-                    st.markdown(f"""
-                        <div style='display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;'>
-                            <div style='display:flex; align-items:center;'>
-                                <div style='width:12px; height:12px; background:{color}; border-radius:3px; margin-right:8px;'></div>
-                                <span style='font-size:0.9rem; font-weight:600;'>{cat}</span>
-                            </div>
-                            <span style='font-size:0.9rem; color:#a0aec0;'>{pct:.1f}%</span>
+                legend_html += f"""
+                    <div style='display:flex; align-items:center; justify-content:space-between;'>
+                        <div style='display:flex; align-items:center;'>
+                            <div style='width:12px; height:12px; background:{color}; border-radius:3px; margin-right:10px;'></div>
+                            <span style='font-size:1rem; font-weight:600;'>{cat}</span>
                         </div>
-                    """, unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+                        <span style='font-size:1rem; color:#a0aec0; font-family: monospace;'>{pct:>4.1f}%</span>
+                    </div>
+                """
+            legend_html += "</div>"
+            st.markdown(legend_html, unsafe_allow_html=True)
         else: st.caption("無資料")
     with c2:
         st.markdown("#### 📈 每日預算")
@@ -371,11 +370,11 @@ if page == "🏠 總覽看板":
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 showlegend=False, # 隱藏圖例，與左邊統一使用下方的自定義圖例
-                xaxis=dict(type='category', gridcolor='#2d3748', tickfont=dict(size=10)),
+                xaxis=dict(type='category', gridcolor='#2d3748', tickfont=dict(size=12)),
                 yaxis=dict(
                     gridcolor='#2d3748', 
                     showticklabels=True, 
-                    tickfont=dict(size=10),
+                    tickfont=dict(size=12, weight='bold'),
                     tickprefix="NT$"
                 ),
                 font=dict(family="Inter", color="#a0aec0"),
