@@ -372,7 +372,12 @@ if page == "🏠 總覽看板":
                 plot_bgcolor="rgba(0,0,0,0)",
                 showlegend=False, # 隱藏圖例，與左邊統一使用下方的自定義圖例
                 xaxis=dict(type='category', gridcolor='#2d3748', tickfont=dict(size=10)),
-                yaxis=dict(gridcolor='#2d3748', showticklabels=False),
+                yaxis=dict(
+                    gridcolor='#2d3748', 
+                    showticklabels=True, 
+                    tickfont=dict(size=10),
+                    tickprefix="NT$"
+                ),
                 font=dict(family="Inter", color="#a0aec0"),
                 barmode='stack'
             )
