@@ -308,6 +308,8 @@ if page == "🏠 總覽看板":
                 hole=.6,
                 marker=dict(colors=colors, line=dict(color='#1a2035', width=2)),
                 textinfo='percent',
+                texttemplate='%{percent:.0%}', # 改為整數百分比，更簡潔
+                textfont=dict(size=14, color="white", family="Inter", weight="bold"),
                 hoverinfo='label+value'
             ))
             fig.update_layout(
